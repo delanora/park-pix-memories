@@ -13,6 +13,7 @@ import { Route as LoginOperadorRouteImport } from './routes/login-operador'
 import { Route as LoginClienteRouteImport } from './routes/login-cliente'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OperadorIndexRouteImport } from './routes/operador.index'
+import { Route as OperadorGaleriaRouteImport } from './routes/operador.galeria'
 
 const LoginOperadorRoute = LoginOperadorRouteImport.update({
   id: '/login-operador',
@@ -34,17 +35,24 @@ const OperadorIndexRoute = OperadorIndexRouteImport.update({
   path: '/operador/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OperadorGaleriaRoute = OperadorGaleriaRouteImport.update({
+  id: '/operador/galeria',
+  path: '/operador/galeria',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login-cliente': typeof LoginClienteRoute
   '/login-operador': typeof LoginOperadorRoute
+  '/operador/galeria': typeof OperadorGaleriaRoute
   '/operador/': typeof OperadorIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login-cliente': typeof LoginClienteRoute
   '/login-operador': typeof LoginOperadorRoute
+  '/operador/galeria': typeof OperadorGaleriaRoute
   '/operador': typeof OperadorIndexRoute
 }
 export interface FileRoutesById {
@@ -52,20 +60,38 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/login-cliente': typeof LoginClienteRoute
   '/login-operador': typeof LoginOperadorRoute
+  '/operador/galeria': typeof OperadorGaleriaRoute
   '/operador/': typeof OperadorIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login-cliente' | '/login-operador' | '/operador/'
+  fullPaths:
+    | '/'
+    | '/login-cliente'
+    | '/login-operador'
+    | '/operador/galeria'
+    | '/operador/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login-cliente' | '/login-operador' | '/operador'
-  id: '__root__' | '/' | '/login-cliente' | '/login-operador' | '/operador/'
+  to:
+    | '/'
+    | '/login-cliente'
+    | '/login-operador'
+    | '/operador/galeria'
+    | '/operador'
+  id:
+    | '__root__'
+    | '/'
+    | '/login-cliente'
+    | '/login-operador'
+    | '/operador/galeria'
+    | '/operador/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginClienteRoute: typeof LoginClienteRoute
   LoginOperadorRoute: typeof LoginOperadorRoute
+  OperadorGaleriaRoute: typeof OperadorGaleriaRoute
   OperadorIndexRoute: typeof OperadorIndexRoute
 }
 
@@ -99,6 +125,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OperadorIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/operador/galeria': {
+      id: '/operador/galeria'
+      path: '/operador/galeria'
+      fullPath: '/operador/galeria'
+      preLoaderRoute: typeof OperadorGaleriaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -106,6 +139,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginClienteRoute: LoginClienteRoute,
   LoginOperadorRoute: LoginOperadorRoute,
+  OperadorGaleriaRoute: OperadorGaleriaRoute,
   OperadorIndexRoute: OperadorIndexRoute,
 }
 export const routeTree = rootRouteImport
