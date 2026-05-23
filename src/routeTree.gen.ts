@@ -17,6 +17,7 @@ import { Route as ClienteIndexRouteImport } from './routes/cliente.index'
 import { Route as OperadorVendasRouteImport } from './routes/operador.vendas'
 import { Route as OperadorUploadRouteImport } from './routes/operador.upload'
 import { Route as OperadorGaleriaRouteImport } from './routes/operador.galeria'
+import { Route as ApiPublicHooksCleanupPhotosRouteImport } from './routes/api.public.hooks.cleanup-photos'
 
 const LoginOperadorRoute = LoginOperadorRouteImport.update({
   id: '/login-operador',
@@ -58,6 +59,12 @@ const OperadorGaleriaRoute = OperadorGaleriaRouteImport.update({
   path: '/operador/galeria',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksCleanupPhotosRoute =
+  ApiPublicHooksCleanupPhotosRouteImport.update({
+    id: '/api/public/hooks/cleanup-photos',
+    path: '/api/public/hooks/cleanup-photos',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -68,6 +75,7 @@ export interface FileRoutesByFullPath {
   '/operador/vendas': typeof OperadorVendasRoute
   '/cliente/': typeof ClienteIndexRoute
   '/operador/': typeof OperadorIndexRoute
+  '/api/public/hooks/cleanup-photos': typeof ApiPublicHooksCleanupPhotosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -78,6 +86,7 @@ export interface FileRoutesByTo {
   '/operador/vendas': typeof OperadorVendasRoute
   '/cliente': typeof ClienteIndexRoute
   '/operador': typeof OperadorIndexRoute
+  '/api/public/hooks/cleanup-photos': typeof ApiPublicHooksCleanupPhotosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -89,6 +98,7 @@ export interface FileRoutesById {
   '/operador/vendas': typeof OperadorVendasRoute
   '/cliente/': typeof ClienteIndexRoute
   '/operador/': typeof OperadorIndexRoute
+  '/api/public/hooks/cleanup-photos': typeof ApiPublicHooksCleanupPhotosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -101,6 +111,7 @@ export interface FileRouteTypes {
     | '/operador/vendas'
     | '/cliente/'
     | '/operador/'
+    | '/api/public/hooks/cleanup-photos'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -111,6 +122,7 @@ export interface FileRouteTypes {
     | '/operador/vendas'
     | '/cliente'
     | '/operador'
+    | '/api/public/hooks/cleanup-photos'
   id:
     | '__root__'
     | '/'
@@ -121,6 +133,7 @@ export interface FileRouteTypes {
     | '/operador/vendas'
     | '/cliente/'
     | '/operador/'
+    | '/api/public/hooks/cleanup-photos'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -132,6 +145,7 @@ export interface RootRouteChildren {
   OperadorVendasRoute: typeof OperadorVendasRoute
   ClienteIndexRoute: typeof ClienteIndexRoute
   OperadorIndexRoute: typeof OperadorIndexRoute
+  ApiPublicHooksCleanupPhotosRoute: typeof ApiPublicHooksCleanupPhotosRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -192,6 +206,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OperadorGaleriaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/cleanup-photos': {
+      id: '/api/public/hooks/cleanup-photos'
+      path: '/api/public/hooks/cleanup-photos'
+      fullPath: '/api/public/hooks/cleanup-photos'
+      preLoaderRoute: typeof ApiPublicHooksCleanupPhotosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -204,7 +225,18 @@ const rootRouteChildren: RootRouteChildren = {
   OperadorVendasRoute: OperadorVendasRoute,
   ClienteIndexRoute: ClienteIndexRoute,
   OperadorIndexRoute: OperadorIndexRoute,
+  ApiPublicHooksCleanupPhotosRoute: ApiPublicHooksCleanupPhotosRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
