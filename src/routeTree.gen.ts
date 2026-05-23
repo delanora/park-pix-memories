@@ -9,9 +9,15 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as LoginOperadorRouteImport } from './routes/login-operador'
 import { Route as LoginClienteRouteImport } from './routes/login-cliente'
 import { Route as IndexRouteImport } from './routes/index'
 
+const LoginOperadorRoute = LoginOperadorRouteImport.update({
+  id: '/login-operador',
+  path: '/login-operador',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginClienteRoute = LoginClienteRouteImport.update({
   id: '/login-cliente',
   path: '/login-cliente',
@@ -26,31 +32,42 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login-cliente': typeof LoginClienteRoute
+  '/login-operador': typeof LoginOperadorRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login-cliente': typeof LoginClienteRoute
+  '/login-operador': typeof LoginOperadorRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/login-cliente': typeof LoginClienteRoute
+  '/login-operador': typeof LoginOperadorRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login-cliente'
+  fullPaths: '/' | '/login-cliente' | '/login-operador'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login-cliente'
-  id: '__root__' | '/' | '/login-cliente'
+  to: '/' | '/login-cliente' | '/login-operador'
+  id: '__root__' | '/' | '/login-cliente' | '/login-operador'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginClienteRoute: typeof LoginClienteRoute
+  LoginOperadorRoute: typeof LoginOperadorRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/login-operador': {
+      id: '/login-operador'
+      path: '/login-operador'
+      fullPath: '/login-operador'
+      preLoaderRoute: typeof LoginOperadorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login-cliente': {
       id: '/login-cliente'
       path: '/login-cliente'
@@ -71,6 +88,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginClienteRoute: LoginClienteRoute,
+  LoginOperadorRoute: LoginOperadorRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
