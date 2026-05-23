@@ -9,38 +9,161 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as LoginOperadorRouteImport } from './routes/login-operador'
+import { Route as LoginClienteRouteImport } from './routes/login-cliente'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as OperadorIndexRouteImport } from './routes/operador.index'
+import { Route as ClienteIndexRouteImport } from './routes/cliente.index'
+import { Route as OperadorVendasRouteImport } from './routes/operador.vendas'
+import { Route as OperadorUploadRouteImport } from './routes/operador.upload'
+import { Route as OperadorGaleriaRouteImport } from './routes/operador.galeria'
+import { Route as ApiPublicHooksCleanupPhotosRouteImport } from './routes/api.public.hooks.cleanup-photos'
 
+const LoginOperadorRoute = LoginOperadorRouteImport.update({
+  id: '/login-operador',
+  path: '/login-operador',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginClienteRoute = LoginClienteRouteImport.update({
+  id: '/login-cliente',
+  path: '/login-cliente',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OperadorIndexRoute = OperadorIndexRouteImport.update({
+  id: '/operador/',
+  path: '/operador/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClienteIndexRoute = ClienteIndexRouteImport.update({
+  id: '/cliente/',
+  path: '/cliente/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OperadorVendasRoute = OperadorVendasRouteImport.update({
+  id: '/operador/vendas',
+  path: '/operador/vendas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OperadorUploadRoute = OperadorUploadRouteImport.update({
+  id: '/operador/upload',
+  path: '/operador/upload',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OperadorGaleriaRoute = OperadorGaleriaRouteImport.update({
+  id: '/operador/galeria',
+  path: '/operador/galeria',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicHooksCleanupPhotosRoute =
+  ApiPublicHooksCleanupPhotosRouteImport.update({
+    id: '/api/public/hooks/cleanup-photos',
+    path: '/api/public/hooks/cleanup-photos',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login-cliente': typeof LoginClienteRoute
+  '/login-operador': typeof LoginOperadorRoute
+  '/operador/galeria': typeof OperadorGaleriaRoute
+  '/operador/upload': typeof OperadorUploadRoute
+  '/operador/vendas': typeof OperadorVendasRoute
+  '/cliente/': typeof ClienteIndexRoute
+  '/operador/': typeof OperadorIndexRoute
+  '/api/public/hooks/cleanup-photos': typeof ApiPublicHooksCleanupPhotosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login-cliente': typeof LoginClienteRoute
+  '/login-operador': typeof LoginOperadorRoute
+  '/operador/galeria': typeof OperadorGaleriaRoute
+  '/operador/upload': typeof OperadorUploadRoute
+  '/operador/vendas': typeof OperadorVendasRoute
+  '/cliente': typeof ClienteIndexRoute
+  '/operador': typeof OperadorIndexRoute
+  '/api/public/hooks/cleanup-photos': typeof ApiPublicHooksCleanupPhotosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/login-cliente': typeof LoginClienteRoute
+  '/login-operador': typeof LoginOperadorRoute
+  '/operador/galeria': typeof OperadorGaleriaRoute
+  '/operador/upload': typeof OperadorUploadRoute
+  '/operador/vendas': typeof OperadorVendasRoute
+  '/cliente/': typeof ClienteIndexRoute
+  '/operador/': typeof OperadorIndexRoute
+  '/api/public/hooks/cleanup-photos': typeof ApiPublicHooksCleanupPhotosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/login-cliente'
+    | '/login-operador'
+    | '/operador/galeria'
+    | '/operador/upload'
+    | '/operador/vendas'
+    | '/cliente/'
+    | '/operador/'
+    | '/api/public/hooks/cleanup-photos'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/login-cliente'
+    | '/login-operador'
+    | '/operador/galeria'
+    | '/operador/upload'
+    | '/operador/vendas'
+    | '/cliente'
+    | '/operador'
+    | '/api/public/hooks/cleanup-photos'
+  id:
+    | '__root__'
+    | '/'
+    | '/login-cliente'
+    | '/login-operador'
+    | '/operador/galeria'
+    | '/operador/upload'
+    | '/operador/vendas'
+    | '/cliente/'
+    | '/operador/'
+    | '/api/public/hooks/cleanup-photos'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  LoginClienteRoute: typeof LoginClienteRoute
+  LoginOperadorRoute: typeof LoginOperadorRoute
+  OperadorGaleriaRoute: typeof OperadorGaleriaRoute
+  OperadorUploadRoute: typeof OperadorUploadRoute
+  OperadorVendasRoute: typeof OperadorVendasRoute
+  ClienteIndexRoute: typeof ClienteIndexRoute
+  OperadorIndexRoute: typeof OperadorIndexRoute
+  ApiPublicHooksCleanupPhotosRoute: typeof ApiPublicHooksCleanupPhotosRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/login-operador': {
+      id: '/login-operador'
+      path: '/login-operador'
+      fullPath: '/login-operador'
+      preLoaderRoute: typeof LoginOperadorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login-cliente': {
+      id: '/login-cliente'
+      path: '/login-cliente'
+      fullPath: '/login-cliente'
+      preLoaderRoute: typeof LoginClienteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +171,61 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/operador/': {
+      id: '/operador/'
+      path: '/operador'
+      fullPath: '/operador/'
+      preLoaderRoute: typeof OperadorIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cliente/': {
+      id: '/cliente/'
+      path: '/cliente'
+      fullPath: '/cliente/'
+      preLoaderRoute: typeof ClienteIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operador/vendas': {
+      id: '/operador/vendas'
+      path: '/operador/vendas'
+      fullPath: '/operador/vendas'
+      preLoaderRoute: typeof OperadorVendasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operador/upload': {
+      id: '/operador/upload'
+      path: '/operador/upload'
+      fullPath: '/operador/upload'
+      preLoaderRoute: typeof OperadorUploadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operador/galeria': {
+      id: '/operador/galeria'
+      path: '/operador/galeria'
+      fullPath: '/operador/galeria'
+      preLoaderRoute: typeof OperadorGaleriaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/cleanup-photos': {
+      id: '/api/public/hooks/cleanup-photos'
+      path: '/api/public/hooks/cleanup-photos'
+      fullPath: '/api/public/hooks/cleanup-photos'
+      preLoaderRoute: typeof ApiPublicHooksCleanupPhotosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  LoginClienteRoute: LoginClienteRoute,
+  LoginOperadorRoute: LoginOperadorRoute,
+  OperadorGaleriaRoute: OperadorGaleriaRoute,
+  OperadorUploadRoute: OperadorUploadRoute,
+  OperadorVendasRoute: OperadorVendasRoute,
+  ClienteIndexRoute: ClienteIndexRoute,
+  OperadorIndexRoute: OperadorIndexRoute,
+  ApiPublicHooksCleanupPhotosRoute: ApiPublicHooksCleanupPhotosRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
