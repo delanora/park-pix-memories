@@ -14,16 +14,160 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      customer_profiles: {
+        Row: {
+          birthdate: string
+          created_at: string
+          full_name: string
+          phone: string
+          user_id: string
+        }
+        Insert: {
+          birthdate: string
+          created_at?: string
+          full_name: string
+          phone: string
+          user_id: string
+        }
+        Update: {
+          birthdate?: string
+          created_at?: string
+          full_name?: string
+          phone?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      photos: {
+        Row: {
+          deleted_at: string | null
+          id: string
+          price: number
+          sequence_number: number
+          status: Database["public"]["Enums"]["photo_status"]
+          storage_path: string
+          taken_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          deleted_at?: string | null
+          id?: string
+          price?: number
+          sequence_number?: number
+          status?: Database["public"]["Enums"]["photo_status"]
+          storage_path: string
+          taken_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          deleted_at?: string | null
+          id?: string
+          price?: number
+          sequence_number?: number
+          status?: Database["public"]["Enums"]["photo_status"]
+          storage_path?: string
+          taken_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
+      sale_items: {
+        Row: {
+          id: string
+          photo_id: string
+          sale_id: string
+          unit_price: number
+        }
+        Insert: {
+          id?: string
+          photo_id: string
+          sale_id: string
+          unit_price?: number
+        }
+        Update: {
+          id?: string
+          photo_id?: string
+          sale_id?: string
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_items_photo_id_fkey"
+            columns: ["photo_id"]
+            isOneToOne: false
+            referencedRelation: "photos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_items_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales: {
+        Row: {
+          created_at: string
+          customer_id: string
+          id: string
+          operator_id: string | null
+          total: number
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          id?: string
+          operator_id?: string | null
+          total?: number
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          id?: string
+          operator_id?: string | null
+          total?: number
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "operator" | "customer"
+      photo_status: "available" | "sold" | "deleted"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +294,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["operator", "customer"],
+      photo_status: ["available", "sold", "deleted"],
+    },
   },
 } as const
