@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginOperadorRouteImport } from './routes/login-operador'
 import { Route as LoginClienteRouteImport } from './routes/login-cliente'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as OperadorIndexRouteImport } from './routes/operador.index'
 
 const LoginOperadorRoute = LoginOperadorRouteImport.update({
   id: '/login-operador',
@@ -28,35 +29,44 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OperadorIndexRoute = OperadorIndexRouteImport.update({
+  id: '/operador/',
+  path: '/operador/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login-cliente': typeof LoginClienteRoute
   '/login-operador': typeof LoginOperadorRoute
+  '/operador/': typeof OperadorIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login-cliente': typeof LoginClienteRoute
   '/login-operador': typeof LoginOperadorRoute
+  '/operador': typeof OperadorIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/login-cliente': typeof LoginClienteRoute
   '/login-operador': typeof LoginOperadorRoute
+  '/operador/': typeof OperadorIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login-cliente' | '/login-operador'
+  fullPaths: '/' | '/login-cliente' | '/login-operador' | '/operador/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login-cliente' | '/login-operador'
-  id: '__root__' | '/' | '/login-cliente' | '/login-operador'
+  to: '/' | '/login-cliente' | '/login-operador' | '/operador'
+  id: '__root__' | '/' | '/login-cliente' | '/login-operador' | '/operador/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginClienteRoute: typeof LoginClienteRoute
   LoginOperadorRoute: typeof LoginOperadorRoute
+  OperadorIndexRoute: typeof OperadorIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -82,6 +92,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/operador/': {
+      id: '/operador/'
+      path: '/operador'
+      fullPath: '/operador/'
+      preLoaderRoute: typeof OperadorIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -89,7 +106,18 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginClienteRoute: LoginClienteRoute,
   LoginOperadorRoute: LoginOperadorRoute,
+  OperadorIndexRoute: OperadorIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
