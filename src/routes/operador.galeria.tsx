@@ -118,6 +118,18 @@ function Gallery() {
             Selecione as fotos do cliente e registre a venda.
           </p>
         </div>
+        <div className="flex flex-wrap gap-2">
+        <Button
+          variant="outline"
+          disabled={!photos?.length}
+          onClick={() => {
+            setSlideIdx(0);
+            setSlideshow(true);
+          }}
+        >
+          <Play className="mr-2 h-4 w-4" />
+          Modo exibição
+        </Button>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button
