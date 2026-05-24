@@ -96,7 +96,7 @@ export function AppSidebar() {
               <SidebarMenu>
                 {operatorItems.map((item) => (
                   <SidebarMenuItem key={item.url}>
-                    <SidebarMenuButton asChild isActive={isActive(item.url)}>
+                    <SidebarMenuButton asChild isActive={isActive(item.url, (item as any).exact)}>
                       <Link to={item.url}>
                         <item.icon className="h-4 w-4" />
                         <span>{item.title}</span>
