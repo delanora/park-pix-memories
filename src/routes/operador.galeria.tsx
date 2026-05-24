@@ -204,7 +204,9 @@ function Gallery() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
+
 
       {isLoading ? (
         <div className="flex h-40 items-center justify-center">
