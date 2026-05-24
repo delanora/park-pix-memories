@@ -49,8 +49,8 @@ export function AppSidebar() {
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
   const { userId, email, isOperator, isCustomer, signOut } = useAuth();
 
-  const isActive = (path: string) =>
-    path === "/" ? currentPath === "/" : currentPath.startsWith(path);
+  const isActive = (path: string, exact?: boolean) =>
+    path === "/" || exact ? currentPath === path : currentPath.startsWith(path);
 
   return (
     <Sidebar collapsible="icon">
