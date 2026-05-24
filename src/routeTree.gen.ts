@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as OperadorIndexRouteImport } from './routes/operador.index'
 import { Route as ClienteIndexRouteImport } from './routes/cliente.index'
 import { Route as OperadorVendasRouteImport } from './routes/operador.vendas'
+import { Route as OperadorUsuariosRouteImport } from './routes/operador.usuarios'
 import { Route as OperadorUploadRouteImport } from './routes/operador.upload'
 import { Route as OperadorGaleriaRouteImport } from './routes/operador.galeria'
 import { Route as ApiPublicHooksCleanupPhotosRouteImport } from './routes/api.public.hooks.cleanup-photos'
@@ -49,6 +50,11 @@ const OperadorVendasRoute = OperadorVendasRouteImport.update({
   path: '/operador/vendas',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OperadorUsuariosRoute = OperadorUsuariosRouteImport.update({
+  id: '/operador/usuarios',
+  path: '/operador/usuarios',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OperadorUploadRoute = OperadorUploadRouteImport.update({
   id: '/operador/upload',
   path: '/operador/upload',
@@ -72,6 +78,7 @@ export interface FileRoutesByFullPath {
   '/login-operador': typeof LoginOperadorRoute
   '/operador/galeria': typeof OperadorGaleriaRoute
   '/operador/upload': typeof OperadorUploadRoute
+  '/operador/usuarios': typeof OperadorUsuariosRoute
   '/operador/vendas': typeof OperadorVendasRoute
   '/cliente/': typeof ClienteIndexRoute
   '/operador/': typeof OperadorIndexRoute
@@ -83,6 +90,7 @@ export interface FileRoutesByTo {
   '/login-operador': typeof LoginOperadorRoute
   '/operador/galeria': typeof OperadorGaleriaRoute
   '/operador/upload': typeof OperadorUploadRoute
+  '/operador/usuarios': typeof OperadorUsuariosRoute
   '/operador/vendas': typeof OperadorVendasRoute
   '/cliente': typeof ClienteIndexRoute
   '/operador': typeof OperadorIndexRoute
@@ -95,6 +103,7 @@ export interface FileRoutesById {
   '/login-operador': typeof LoginOperadorRoute
   '/operador/galeria': typeof OperadorGaleriaRoute
   '/operador/upload': typeof OperadorUploadRoute
+  '/operador/usuarios': typeof OperadorUsuariosRoute
   '/operador/vendas': typeof OperadorVendasRoute
   '/cliente/': typeof ClienteIndexRoute
   '/operador/': typeof OperadorIndexRoute
@@ -108,6 +117,7 @@ export interface FileRouteTypes {
     | '/login-operador'
     | '/operador/galeria'
     | '/operador/upload'
+    | '/operador/usuarios'
     | '/operador/vendas'
     | '/cliente/'
     | '/operador/'
@@ -119,6 +129,7 @@ export interface FileRouteTypes {
     | '/login-operador'
     | '/operador/galeria'
     | '/operador/upload'
+    | '/operador/usuarios'
     | '/operador/vendas'
     | '/cliente'
     | '/operador'
@@ -130,6 +141,7 @@ export interface FileRouteTypes {
     | '/login-operador'
     | '/operador/galeria'
     | '/operador/upload'
+    | '/operador/usuarios'
     | '/operador/vendas'
     | '/cliente/'
     | '/operador/'
@@ -142,6 +154,7 @@ export interface RootRouteChildren {
   LoginOperadorRoute: typeof LoginOperadorRoute
   OperadorGaleriaRoute: typeof OperadorGaleriaRoute
   OperadorUploadRoute: typeof OperadorUploadRoute
+  OperadorUsuariosRoute: typeof OperadorUsuariosRoute
   OperadorVendasRoute: typeof OperadorVendasRoute
   ClienteIndexRoute: typeof ClienteIndexRoute
   OperadorIndexRoute: typeof OperadorIndexRoute
@@ -192,6 +205,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OperadorVendasRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/operador/usuarios': {
+      id: '/operador/usuarios'
+      path: '/operador/usuarios'
+      fullPath: '/operador/usuarios'
+      preLoaderRoute: typeof OperadorUsuariosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/operador/upload': {
       id: '/operador/upload'
       path: '/operador/upload'
@@ -222,6 +242,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginOperadorRoute: LoginOperadorRoute,
   OperadorGaleriaRoute: OperadorGaleriaRoute,
   OperadorUploadRoute: OperadorUploadRoute,
+  OperadorUsuariosRoute: OperadorUsuariosRoute,
   OperadorVendasRoute: OperadorVendasRoute,
   ClienteIndexRoute: ClienteIndexRoute,
   OperadorIndexRoute: OperadorIndexRoute,
@@ -230,3 +251,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
