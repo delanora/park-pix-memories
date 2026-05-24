@@ -9,6 +9,7 @@ import {
   Receipt,
   Upload,
   User,
+  Users,
 } from "lucide-react";
 import {
   Sidebar,
