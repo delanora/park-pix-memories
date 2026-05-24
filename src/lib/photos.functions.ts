@@ -402,6 +402,131 @@ export const getOperatorStats = createServerFn({ method: "GET" })
   });
 
 // ------------------------------------------------------------------
+// Sales metrics dashboard (operator)
+// ------------------------------------------------------------------
+export const getSalesMetrics = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { userId } = context;
+    const { data: op } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "operator")
+      .maybeSingle();
+    if (!op) throw new Error("Acesso negado");
+
+    // Pull all sales with their items count
+    const { data: sales, error } = await supabaseAdmin
+      .from("sales")
+      .select("id, total, created_at, operator_id, sale_items(photo_id)")
+      .order("created_at", { ascending: false })
+      .limit(1000);
+    if (error) throw new Error(error.message);
+
+    const all = sales ?? [];
+    const now = new Date();
+    const since24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const startOfToday = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    );
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const totalRevenue = all.reduce((s, r) => s + Number(r.total), 0);
+    const totalSales = all.length;
+    const totalPhotos = all.reduce(
+      (s, r) => s + ((r as any).sale_items?.length ?? 0),
+      0,
+    );
+
+    const todaySales = all.filter((r) => new Date(r.created_at) >= startOfToday);
+    const monthSales = all.filter((r) => new Date(r.created_at) >= startOfMonth);
+    const todayRevenue = todaySales.reduce((s, r) => s + Number(r.total), 0);
+    const monthRevenue = monthSales.reduce((s, r) => s + Number(r.total), 0);
+
+    // Hourly breakdown for the last 24 hours
+    const byHour: Array<{ hour: string; revenue: number; sales: number }> = [];
+    for (let i = 23; i >= 0; i--) {
+      const slotEnd = new Date(now.getTime() - i * 60 * 60 * 1000);
+      const slotStart = new Date(slotEnd.getTime() - 60 * 60 * 1000);
+      const bucket = all.filter((r) => {
+        const t = new Date(r.created_at);
+        return t >= slotStart && t < slotEnd;
+      });
+      byHour.push({
+        hour: `${String(slotEnd.getHours()).padStart(2, "0")}h`,
+        revenue: bucket.reduce((s, r) => s + Number(r.total), 0),
+        sales: bucket.length,
+      });
+    }
+
+    // Last 14 days for context
+    const byDay: Array<{ day: string; revenue: number; sales: number }> = [];
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - i,
+      );
+      const next = new Date(d.getTime() + 24 * 60 * 60 * 1000);
+      const bucket = all.filter((r) => {
+        const t = new Date(r.created_at);
+        return t >= d && t < next;
+      });
+      byDay.push({
+        day: `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`,
+        revenue: bucket.reduce((s, r) => s + Number(r.total), 0),
+        sales: bucket.length,
+      });
+    }
+
+    // Group by operator
+    const opMap = new Map<
+      string,
+      { revenue: number; sales: number; photos: number }
+    >();
+    for (const r of all) {
+      const k = r.operator_id ?? "—";
+      const cur = opMap.get(k) ?? { revenue: 0, sales: 0, photos: 0 };
+      cur.revenue += Number(r.total);
+      cur.sales += 1;
+      cur.photos += (r as any).sale_items?.length ?? 0;
+      opMap.set(k, cur);
+    }
+    const byOperator: Array<{
+      operatorId: string;
+      email: string;
+      revenue: number;
+      sales: number;
+      photos: number;
+    }> = [];
+    for (const [opId, v] of opMap.entries()) {
+      let email = "—";
+      if (opId !== "—") {
+        const u = await supabaseAdmin.auth.admin.getUserById(opId);
+        email = u.data.user?.email ?? opId.slice(0, 8);
+      }
+      byOperator.push({ operatorId: opId, email, ...v });
+    }
+    byOperator.sort((a, b) => b.revenue - a.revenue);
+
+    return {
+      totalRevenue,
+      totalSales,
+      totalPhotos,
+      todayRevenue,
+      todaySalesCount: todaySales.length,
+      monthRevenue,
+      monthSalesCount: monthSales.length,
+      byHour,
+      byDay,
+      byOperator,
+    };
+  });
+
+// ------------------------------------------------------------------
 // First-operator signup helper (used when there are zero operators)
 // ------------------------------------------------------------------
 const SignupSchema = z.object({
