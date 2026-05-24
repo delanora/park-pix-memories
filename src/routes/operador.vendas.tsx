@@ -106,15 +106,15 @@ function SalesPage() {
                         name === "revenue" ? formatPriceBRL(v) : v
                       }
                       contentStyle={{
-                        background: "hsl(var(--card))",
-                        border: "1px solid hsl(var(--border))",
+                        background: "var(--card)",
+                        border: "1px solid var(--border)",
                         borderRadius: 8,
                       }}
                     />
                     <Bar
                       dataKey="revenue"
                       name="Receita"
-                      fill="hsl(var(--primary))"
+                      fill="var(--primary)"
                       radius={[4, 4, 0, 0]}
                     />
                   </BarChart>
@@ -135,8 +135,8 @@ function SalesPage() {
                     <Tooltip
                       formatter={(v: number) => formatPriceBRL(v)}
                       contentStyle={{
-                        background: "hsl(var(--card))",
-                        border: "1px solid hsl(var(--border))",
+                        background: "var(--card)",
+                        border: "1px solid var(--border)",
                         borderRadius: 8,
                       }}
                     />
@@ -144,7 +144,7 @@ function SalesPage() {
                       type="monotone"
                       dataKey="revenue"
                       name="Receita"
-                      stroke="hsl(var(--primary))"
+                      stroke="var(--primary)"
                       strokeWidth={2.5}
                       dot={{ r: 3 }}
                     />
@@ -178,15 +178,15 @@ function SalesPage() {
                       <Tooltip
                         formatter={(v: number) => formatPriceBRL(v)}
                         contentStyle={{
-                          background: "hsl(var(--card))",
-                          border: "1px solid hsl(var(--border))",
+                          background: "var(--card)",
+                          border: "1px solid var(--border)",
                           borderRadius: 8,
                         }}
                       />
                       <Bar
                         dataKey="revenue"
                         name="Receita"
-                        fill="hsl(var(--primary))"
+                        fill="var(--primary)"
                         radius={[0, 4, 4, 0]}
                       />
                     </BarChart>
