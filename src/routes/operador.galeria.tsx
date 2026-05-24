@@ -45,13 +45,39 @@ function Gallery() {
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({ fullName: "", phone: "", birthdate: "" });
+  const [slideshow, setSlideshow] = useState(false);
+  const [slideIdx, setSlideIdx] = useState(0);
 
-  const toggle = (id: string) =>
+  const toggle = (id: string, status: string) => {
+    if (status === "sold") return;
     setSelected((s) => {
       const n = new Set(s);
       n.has(id) ? n.delete(id) : n.add(id);
       return n;
     });
+  };
+
+  useEffect(() => {
+    if (!slideshow || !photos?.length) return;
+    const t = setInterval(
+      () => setSlideIdx((i) => (i + 1) % photos.length),
+      8000,
+    );
+    return () => clearInterval(t);
+  }, [slideshow, photos]);
+
+  useEffect(() => {
+    if (!slideshow) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSlideshow(false);
+      if (e.key === "ArrowRight")
+        setSlideIdx((i) => (i + 1) % (photos?.length ?? 1));
+      if (e.key === "ArrowLeft")
+        setSlideIdx((i) => (i - 1 + (photos?.length ?? 1)) % (photos?.length ?? 1));
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [slideshow, photos]);
 
   const selectedPhotos = (photos ?? []).filter((p) => selected.has(p.id));
   const total = selectedPhotos.reduce((sum, p) => sum + p.price, 0);
