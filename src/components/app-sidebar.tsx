@@ -163,6 +163,19 @@ export function AppSidebar() {
               {email}
             </div>
           )}
+          {isOperator && (
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="mb-2 w-full justify-start gap-2"
+            >
+              <Link to="/operador/usuarios">
+                <Users className="h-4 w-4" />
+                {!collapsed && <span>Novo operador</span>}
+              </Link>
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"
