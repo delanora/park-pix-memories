@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   listGalleryPhotos,
   createCustomerAndSale,
@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { formatPriceBRL } from "@/lib/photo-utils";
 import { toast } from "sonner";
-import { Check, Loader2, ShoppingCart } from "lucide-react";
+import { Check, Loader2, Play, ShoppingCart, X } from "lucide-react";
 
 export const Route = createFileRoute("/operador/galeria")({
   head: () => ({ meta: [{ title: "Galeria | ParkSnap" }] }),
@@ -45,13 +45,39 @@ function Gallery() {
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({ fullName: "", phone: "", birthdate: "" });
+  const [slideshow, setSlideshow] = useState(false);
+  const [slideIdx, setSlideIdx] = useState(0);
 
-  const toggle = (id: string) =>
+  const toggle = (id: string, status: string) => {
+    if (status === "sold") return;
     setSelected((s) => {
       const n = new Set(s);
       n.has(id) ? n.delete(id) : n.add(id);
       return n;
     });
+  };
+
+  useEffect(() => {
+    if (!slideshow || !photos?.length) return;
+    const t = setInterval(
+      () => setSlideIdx((i) => (i + 1) % photos.length),
+      8000,
+    );
+    return () => clearInterval(t);
+  }, [slideshow, photos]);
+
+  useEffect(() => {
+    if (!slideshow) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSlideshow(false);
+      if (e.key === "ArrowRight")
+        setSlideIdx((i) => (i + 1) % (photos?.length ?? 1));
+      if (e.key === "ArrowLeft")
+        setSlideIdx((i) => (i - 1 + (photos?.length ?? 1)) % (photos?.length ?? 1));
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [slideshow, photos]);
 
   const selectedPhotos = (photos ?? []).filter((p) => selected.has(p.id));
   const total = selectedPhotos.reduce((sum, p) => sum + p.price, 0);
@@ -92,6 +118,18 @@ function Gallery() {
             Selecione as fotos do cliente e registre a venda.
           </p>
         </div>
+        <div className="flex flex-wrap gap-2">
+        <Button
+          variant="outline"
+          disabled={!photos?.length}
+          onClick={() => {
+            setSlideIdx(0);
+            setSlideshow(true);
+          }}
+        >
+          <Play className="mr-2 h-4 w-4" />
+          Modo exibição
+        </Button>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button
@@ -166,7 +204,9 @@ function Gallery() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
+
 
       {isLoading ? (
         <div className="flex h-40 items-center justify-center">
@@ -178,15 +218,17 @@ function Gallery() {
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {photos.map((p) => {
             const on = selected.has(p.id);
+            const sold = p.status === "sold";
             return (
               <button
                 key={p.id}
-                onClick={() => toggle(p.id)}
+                onClick={() => toggle(p.id, p.status)}
+                disabled={sold}
                 className={`group relative aspect-square overflow-hidden rounded-2xl border bg-muted text-left shadow-soft transition ${
                   on
                     ? "border-primary ring-2 ring-primary"
                     : "border-border hover:border-primary/50"
-                }`}
+                } ${sold ? "cursor-not-allowed opacity-80" : ""}`}
               >
                 <img
                   src={p.url}
@@ -198,6 +240,11 @@ function Gallery() {
                   <span className="font-medium">{formatPriceBRL(p.price)}</span>
                   <span>#{p.sequenceNumber}</span>
                 </div>
+                {sold && (
+                  <div className="absolute left-2 top-2 rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-semibold uppercase text-white shadow">
+                    Vendida
+                  </div>
+                )}
                 {on && (
                   <div className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-glow">
                     <Check className="h-4 w-4" />
@@ -208,6 +255,28 @@ function Gallery() {
           })}
         </div>
       )}
+
+      {slideshow && photos?.length ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black">
+          <img
+            src={photos[slideIdx % photos.length].url}
+            alt=""
+            className="max-h-full max-w-full object-contain animate-fade-in"
+            key={photos[slideIdx % photos.length].id}
+          />
+          <div className="pointer-events-none absolute bottom-6 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-4 py-1 text-xs text-white">
+            {(slideIdx % photos.length) + 1} / {photos.length} · troca a cada 8s · Esc para sair
+          </div>
+          <Button
+            variant="outline"
+            size="icon"
+            className="absolute right-4 top-4 bg-background/80"
+            onClick={() => setSlideshow(false)}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }

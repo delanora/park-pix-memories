@@ -9,6 +9,7 @@ import {
   Receipt,
   Upload,
   User,
+  Users,
 } from "lucide-react";
 import {
   Sidebar,
@@ -31,7 +32,7 @@ const publicItems = [
 ];
 
 const operatorItems = [
-  { title: "Dashboard", url: "/operador", icon: LayoutDashboard },
+  { title: "Dashboard", url: "/operador", icon: LayoutDashboard, exact: true },
   { title: "Galeria", url: "/operador/galeria", icon: Images },
   { title: "Enviar foto", url: "/operador/upload", icon: Upload },
   { title: "Vendas", url: "/operador/vendas", icon: Receipt },
@@ -48,8 +49,8 @@ export function AppSidebar() {
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
   const { userId, email, isOperator, isCustomer, signOut } = useAuth();
 
-  const isActive = (path: string) =>
-    path === "/" ? currentPath === "/" : currentPath.startsWith(path);
+  const isActive = (path: string, exact?: boolean) =>
+    path === "/" || exact ? currentPath === path : currentPath.startsWith(path);
 
   return (
     <Sidebar collapsible="icon">
@@ -95,7 +96,7 @@ export function AppSidebar() {
               <SidebarMenu>
                 {operatorItems.map((item) => (
                   <SidebarMenuItem key={item.url}>
-                    <SidebarMenuButton asChild isActive={isActive(item.url)}>
+                    <SidebarMenuButton asChild isActive={isActive(item.url, (item as any).exact)}>
                       <Link to={item.url}>
                         <item.icon className="h-4 w-4" />
                         <span>{item.title}</span>
@@ -161,6 +162,19 @@ export function AppSidebar() {
             <div className="mb-2 truncate text-xs text-muted-foreground">
               {email}
             </div>
+          )}
+          {isOperator && (
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="mb-2 w-full justify-start gap-2"
+            >
+              <Link to="/operador/usuarios">
+                <Users className="h-4 w-4" />
+                {!collapsed && <span>Novo operador</span>}
+              </Link>
+            </Button>
           )}
           <Button
             variant="outline"

@@ -102,9 +102,9 @@ export const listGalleryPhotos = createServerFn({ method: "GET" })
     const { data: photos, error } = await supabaseAdmin
       .from("photos")
       .select("id, storage_path, price, taken_at, status, sequence_number")
-      .eq("status", "available")
-      .order("taken_at", { ascending: false })
-      .limit(200);
+      .in("status", ["available", "sold"])
+      .order("sequence_number", { ascending: false })
+      .limit(30);
     if (error) throw new Error(error.message);
 
     const rows = await Promise.all(
@@ -423,4 +423,75 @@ export const claimFirstOperator = createServerFn({ method: "POST" })
       .insert({ user_id: data.userId, role: "operator" });
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+// ------------------------------------------------------------------
+// Create a new operator (admin = any existing operator)
+// ------------------------------------------------------------------
+const CreateOperatorSchema = z.object({
+  email: z.string().email().max(180),
+  password: z.string().min(6).max(120),
+});
+
+export const createOperator = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => CreateOperatorSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const { data: op } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "operator")
+      .maybeSingle();
+    if (!op) throw new Error("Apenas operadores podem criar novos operadores");
+
+    const created = await supabaseAdmin.auth.admin.createUser({
+      email: data.email,
+      password: data.password,
+      email_confirm: true,
+    });
+    if (created.error || !created.data.user) {
+      throw new Error(created.error?.message ?? "Falha ao criar operador");
+    }
+    const newId = created.data.user.id;
+    const { error: roleErr } = await supabaseAdmin
+      .from("user_roles")
+      .insert({ user_id: newId, role: "operator" });
+    if (roleErr) throw new Error(roleErr.message);
+    return { id: newId, email: data.email };
+  });
+
+// ------------------------------------------------------------------
+// List operators (operator only)
+// ------------------------------------------------------------------
+export const listOperators = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { userId } = context;
+    const { data: op } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "operator")
+      .maybeSingle();
+    if (!op) throw new Error("Acesso negado");
+
+    const { data: roles, error } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id, created_at")
+      .eq("role", "operator")
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+
+    const out: Array<{ id: string; email: string | null; createdAt: string }> = [];
+    for (const r of roles ?? []) {
+      const u = await supabaseAdmin.auth.admin.getUserById(r.user_id);
+      out.push({
+        id: r.user_id,
+        email: u.data.user?.email ?? null,
+        createdAt: r.created_at,
+      });
+    }
+    return out;
   });
