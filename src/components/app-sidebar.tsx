@@ -32,7 +32,7 @@ const publicItems = [
 ];
 
 const operatorItems = [
-  { title: "Dashboard", url: "/operador", icon: LayoutDashboard },
+  { title: "Dashboard", url: "/operador", icon: LayoutDashboard, exact: true },
   { title: "Galeria", url: "/operador/galeria", icon: Images },
   { title: "Enviar foto", url: "/operador/upload", icon: Upload },
   { title: "Vendas", url: "/operador/vendas", icon: Receipt },
