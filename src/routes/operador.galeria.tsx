@@ -265,7 +265,7 @@ function Gallery() {
             key={photos[slideIdx % photos.length].id}
           />
           <div className="pointer-events-none absolute bottom-6 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-4 py-1 text-xs text-white">
-            {(slideIdx % photos.length) + 1} / {photos.length} · troca a cada 8s · Esc para sair
+            {(slideIdx % photos.length) + 1} / {photos.length} - troca a cada 8s - Esc para sair
           </div>
           <Button
             variant="outline"
