@@ -102,9 +102,9 @@ export const listGalleryPhotos = createServerFn({ method: "GET" })
     const { data: photos, error } = await supabaseAdmin
       .from("photos")
       .select("id, storage_path, price, taken_at, status, sequence_number")
-      .eq("status", "available")
-      .order("taken_at", { ascending: false })
-      .limit(200);
+      .in("status", ["available", "sold"])
+      .order("sequence_number", { ascending: false })
+      .limit(30);
     if (error) throw new Error(error.message);
 
     const rows = await Promise.all(
