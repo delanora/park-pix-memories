@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { formatPriceBRL } from "@/lib/photo-utils";
 import { toast } from "sonner";
-import { Check, Loader2, ShoppingCart } from "lucide-react";
+import { Check, Loader2, Play, ShoppingCart, X } from "lucide-react";
 
 export const Route = createFileRoute("/operador/galeria")({
   head: () => ({ meta: [{ title: "Galeria | ParkSnap" }] }),
