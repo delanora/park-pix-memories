@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import {
   listGalleryPhotos,
   createCustomerAndSale,
+  deletePhoto,
 } from "@/lib/photos.functions";
 import { RequireRole } from "@/components/require-role";
 import { Button } from "@/components/ui/button";
