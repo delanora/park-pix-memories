@@ -46,6 +46,9 @@ function Gallery() {
   const qc = useQueryClient();
   const listFn = useServerFn(listGalleryPhotos);
   const sellFn = useServerFn(createCustomerAndSale);
+  const deleteFn = useServerFn(deletePhoto);
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const { data: photos, isLoading } = useQuery({
     queryKey: ["gallery"],
