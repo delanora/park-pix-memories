@@ -61,11 +61,6 @@ function Landing() {
         <div className="mx-auto grid max-w-5xl gap-4 md:grid-cols-3">
           {[
             {
-              icon: Camera,
-              title: "Capturado nas atrações",
-              text: "Fotos profissionais em todas as principais atrações do parque.",
-            },
-            {
               icon: ShieldCheck,
               title: "Suas fotos, protegidas",
               text: "Acesso só com seu telefone e senha. Sem compartilhamento.",
