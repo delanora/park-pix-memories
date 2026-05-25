@@ -123,6 +123,27 @@ function Gallery() {
     }
   }
 
+  async function handleDelete() {
+    if (!pendingDelete) return;
+    setDeleting(true);
+    try {
+      await deleteFn({ data: { photoId: pendingDelete } });
+      toast.success("Foto apagada");
+      setSelected((s) => {
+        const n = new Set(s);
+        n.delete(pendingDelete);
+        return n;
+      });
+      setPendingDelete(null);
+      qc.invalidateQueries({ queryKey: ["gallery"] });
+      qc.invalidateQueries({ queryKey: ["operator-stats"] });
+    } catch (err: any) {
+      toast.error(err.message ?? "Falha ao apagar a foto");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   return (
     <div className="p-6 md:p-8">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
