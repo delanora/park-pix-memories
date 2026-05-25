@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listLatestPhotos } from "@/lib/photos.functions";
 import { Button } from "@/components/ui/button";
-import { Camera, Sparkles, ShieldCheck, Download } from "lucide-react";
+import { Sparkles, ShieldCheck, Download } from "lucide-react";
 import { formatPriceBRL } from "@/lib/photo-utils";
 
 export const Route = createFileRoute("/")({
