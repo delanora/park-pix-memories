@@ -620,3 +620,38 @@ export const listOperators = createServerFn({ method: "GET" })
     }
     return out;
   });
+
+// ------------------------------------------------------------------
+// Delete a photo (operator only) — removes file from storage and marks deleted
+// ------------------------------------------------------------------
+const DeletePhotoSchema = z.object({ photoId: z.string().uuid() });
+
+export const deletePhoto = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => DeletePhotoSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const { data: op } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "operator")
+      .maybeSingle();
+    if (!op) throw new Error("Apenas operadores podem apagar fotos");
+
+    const { data: photo, error: fetchErr } = await supabaseAdmin
+      .from("photos")
+      .select("storage_path")
+      .eq("id", data.photoId)
+      .maybeSingle();
+    if (fetchErr) throw new Error(fetchErr.message);
+    if (!photo) throw new Error("Foto não encontrada");
+
+    await deleteFilesFromBucket([photo.storage_path]);
+    const { error: updErr } = await supabaseAdmin
+      .from("photos")
+      .update({ status: "deleted", deleted_at: new Date().toISOString() })
+      .eq("id", data.photoId);
+    if (updErr) throw new Error(updErr.message);
+    return { ok: true };
+  });
