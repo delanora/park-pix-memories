@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listLatestPhotos } from "@/lib/photos.functions";
 import { Button } from "@/components/ui/button";
-import { Camera, Sparkles, ShieldCheck, Download } from "lucide-react";
+import { Sparkles, ShieldCheck, Download } from "lucide-react";
 import { formatPriceBRL } from "@/lib/photo-utils";
 
 export const Route = createFileRoute("/")({
@@ -60,11 +60,6 @@ function Landing() {
       <section className="px-6 pb-12">
         <div className="mx-auto grid max-w-5xl gap-4 md:grid-cols-3">
           {[
-            {
-              icon: Camera,
-              title: "Capturado nas atrações",
-              text: "Fotos profissionais em todas as principais atrações do parque.",
-            },
             {
               icon: ShieldCheck,
               title: "Suas fotos, protegidas",
