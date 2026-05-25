@@ -255,37 +255,55 @@ function Gallery() {
             const on = selected.has(p.id);
             const sold = p.status === "sold";
             return (
-              <button
+              <div
                 key={p.id}
-                onClick={() => toggle(p.id, p.status)}
-                disabled={sold}
                 className={`group relative aspect-square overflow-hidden rounded-2xl border bg-muted text-left shadow-soft transition ${
                   on
                     ? "border-primary ring-2 ring-primary"
                     : "border-border hover:border-primary/50"
-                } ${sold ? "cursor-not-allowed opacity-80" : ""}`}
+                } ${sold ? "opacity-80" : ""}`}
               >
-                <img
-                  src={p.url}
-                  alt=""
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  loading="lazy"
-                />
-                <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/80 to-transparent p-2 text-xs text-white">
+                <button
+                  type="button"
+                  onClick={() => toggle(p.id, p.status)}
+                  disabled={sold}
+                  className={`absolute inset-0 z-0 ${sold ? "cursor-not-allowed" : "cursor-pointer"}`}
+                  aria-label="Selecionar foto"
+                >
+                  <img
+                    src={p.url}
+                    alt=""
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                </button>
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/80 to-transparent p-2 text-xs text-white">
                   <span className="font-medium">{formatPriceBRL(p.price)}</span>
                   <span>#{p.sequenceNumber}</span>
                 </div>
                 {sold && (
-                  <div className="absolute left-2 top-2 rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-semibold uppercase text-white shadow">
+                  <div className="pointer-events-none absolute left-2 top-2 rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-semibold uppercase text-white shadow">
                     Vendida
                   </div>
                 )}
                 {on && (
-                  <div className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-glow">
+                  <div className="pointer-events-none absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-glow">
                     <Check className="h-4 w-4" />
                   </div>
                 )}
-              </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setPendingDelete(p.id);
+                  }}
+                  className="absolute bottom-2 right-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-destructive/90 text-destructive-foreground opacity-0 shadow transition hover:bg-destructive group-hover:opacity-100 focus:opacity-100"
+                  aria-label="Apagar foto"
+                  title="Apagar foto"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
             );
           })}
         </div>
