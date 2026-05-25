@@ -21,7 +21,17 @@ import {
 } from "@/components/ui/dialog";
 import { formatPriceBRL } from "@/lib/photo-utils";
 import { toast } from "sonner";
-import { Check, Loader2, Play, ShoppingCart, X } from "lucide-react";
+import { Check, Loader2, Play, ShoppingCart, Trash2, X } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/operador/galeria")({
   head: () => ({ meta: [{ title: "Galeria | ParkSnap" }] }),
