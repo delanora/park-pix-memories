@@ -49,8 +49,11 @@ function Gallery() {
   const listFn = useServerFn(listGalleryPhotos);
   const sellFn = useServerFn(createCustomerAndSale);
   const deleteFn = useServerFn(deletePhoto);
+  const ingestFn = useServerFn(ingestLocalPhotos);
   const [pendingDelete, setPendingDelete] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [ingesting, setIngesting] = useState(false);
+
 
   const { data: photos, isLoading } = useQuery({
     queryKey: ["gallery"],
