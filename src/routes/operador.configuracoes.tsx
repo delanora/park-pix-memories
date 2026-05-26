@@ -157,6 +157,12 @@ function SettingsPage() {
           <ColorField label="Cor primária" value={form.primaryColor} onChange={set("primaryColor")} />
           <ColorField label="Cor secundária" value={form.secondaryColor} onChange={set("secondaryColor")} />
           <ColorField label="Cor de destaque" value={form.accentColor} onChange={set("accentColor")} />
+          <div className="my-3 border-t border-border" />
+          <p className="text-xs font-medium text-muted-foreground">Cores de fundo</p>
+          <ColorField label="Fundo da página" value={form.backgroundColor} onChange={set("backgroundColor")} />
+          <ColorField label="Fundo dos cards" value={form.cardBackgroundColor} onChange={set("cardBackgroundColor")} />
+          <ColorField label="Fundo muted" value={form.mutedBackgroundColor} onChange={set("mutedBackgroundColor")} />
+          <ColorField label="Cor do texto" value={form.foregroundColor} onChange={set("foregroundColor")} />
         </TabsContent>
 
         <TabsContent value="hero" className="space-y-4 rounded-2xl border border-border bg-card p-5 shadow-soft">
