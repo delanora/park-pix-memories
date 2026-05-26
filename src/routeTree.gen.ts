@@ -18,6 +18,7 @@ import { Route as OperadorVendasRouteImport } from './routes/operador.vendas'
 import { Route as OperadorUsuariosRouteImport } from './routes/operador.usuarios'
 import { Route as OperadorUploadRouteImport } from './routes/operador.upload'
 import { Route as OperadorGaleriaRouteImport } from './routes/operador.galeria'
+import { Route as OperadorConfiguracoesRouteImport } from './routes/operador.configuracoes'
 import { Route as ApiPublicHooksCleanupPhotosRouteImport } from './routes/api.public.hooks.cleanup-photos'
 
 const LoginOperadorRoute = LoginOperadorRouteImport.update({
@@ -65,6 +66,11 @@ const OperadorGaleriaRoute = OperadorGaleriaRouteImport.update({
   path: '/operador/galeria',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OperadorConfiguracoesRoute = OperadorConfiguracoesRouteImport.update({
+  id: '/operador/configuracoes',
+  path: '/operador/configuracoes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksCleanupPhotosRoute =
   ApiPublicHooksCleanupPhotosRouteImport.update({
     id: '/api/public/hooks/cleanup-photos',
@@ -76,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login-cliente': typeof LoginClienteRoute
   '/login-operador': typeof LoginOperadorRoute
+  '/operador/configuracoes': typeof OperadorConfiguracoesRoute
   '/operador/galeria': typeof OperadorGaleriaRoute
   '/operador/upload': typeof OperadorUploadRoute
   '/operador/usuarios': typeof OperadorUsuariosRoute
@@ -88,6 +95,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login-cliente': typeof LoginClienteRoute
   '/login-operador': typeof LoginOperadorRoute
+  '/operador/configuracoes': typeof OperadorConfiguracoesRoute
   '/operador/galeria': typeof OperadorGaleriaRoute
   '/operador/upload': typeof OperadorUploadRoute
   '/operador/usuarios': typeof OperadorUsuariosRoute
@@ -101,6 +109,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/login-cliente': typeof LoginClienteRoute
   '/login-operador': typeof LoginOperadorRoute
+  '/operador/configuracoes': typeof OperadorConfiguracoesRoute
   '/operador/galeria': typeof OperadorGaleriaRoute
   '/operador/upload': typeof OperadorUploadRoute
   '/operador/usuarios': typeof OperadorUsuariosRoute
@@ -115,6 +124,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login-cliente'
     | '/login-operador'
+    | '/operador/configuracoes'
     | '/operador/galeria'
     | '/operador/upload'
     | '/operador/usuarios'
@@ -127,6 +137,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login-cliente'
     | '/login-operador'
+    | '/operador/configuracoes'
     | '/operador/galeria'
     | '/operador/upload'
     | '/operador/usuarios'
@@ -139,6 +150,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login-cliente'
     | '/login-operador'
+    | '/operador/configuracoes'
     | '/operador/galeria'
     | '/operador/upload'
     | '/operador/usuarios'
@@ -152,6 +164,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginClienteRoute: typeof LoginClienteRoute
   LoginOperadorRoute: typeof LoginOperadorRoute
+  OperadorConfiguracoesRoute: typeof OperadorConfiguracoesRoute
   OperadorGaleriaRoute: typeof OperadorGaleriaRoute
   OperadorUploadRoute: typeof OperadorUploadRoute
   OperadorUsuariosRoute: typeof OperadorUsuariosRoute
@@ -226,6 +239,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OperadorGaleriaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/operador/configuracoes': {
+      id: '/operador/configuracoes'
+      path: '/operador/configuracoes'
+      fullPath: '/operador/configuracoes'
+      preLoaderRoute: typeof OperadorConfiguracoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/cleanup-photos': {
       id: '/api/public/hooks/cleanup-photos'
       path: '/api/public/hooks/cleanup-photos'
@@ -240,6 +260,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginClienteRoute: LoginClienteRoute,
   LoginOperadorRoute: LoginOperadorRoute,
+  OperadorConfiguracoesRoute: OperadorConfiguracoesRoute,
   OperadorGaleriaRoute: OperadorGaleriaRoute,
   OperadorUploadRoute: OperadorUploadRoute,
   OperadorUsuariosRoute: OperadorUsuariosRoute,

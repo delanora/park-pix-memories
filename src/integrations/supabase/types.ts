@@ -131,6 +131,78 @@ export type Database = {
         }
         Relationships: []
       }
+      site_settings: {
+        Row: {
+          accent_color: string
+          cta_customer: string
+          cta_operator: string
+          feature_1_text: string
+          feature_1_title: string
+          feature_2_text: string
+          feature_2_title: string
+          hero_badge: string
+          hero_subtitle: string
+          hero_title_1: string
+          hero_title_2: string
+          id: boolean
+          latest_subtitle: string
+          latest_title: string
+          meta_description: string
+          meta_title: string
+          primary_color: string
+          secondary_color: string
+          site_name: string
+          site_tagline: string
+          updated_at: string
+        }
+        Insert: {
+          accent_color?: string
+          cta_customer?: string
+          cta_operator?: string
+          feature_1_text?: string
+          feature_1_title?: string
+          feature_2_text?: string
+          feature_2_title?: string
+          hero_badge?: string
+          hero_subtitle?: string
+          hero_title_1?: string
+          hero_title_2?: string
+          id?: boolean
+          latest_subtitle?: string
+          latest_title?: string
+          meta_description?: string
+          meta_title?: string
+          primary_color?: string
+          secondary_color?: string
+          site_name?: string
+          site_tagline?: string
+          updated_at?: string
+        }
+        Update: {
+          accent_color?: string
+          cta_customer?: string
+          cta_operator?: string
+          feature_1_text?: string
+          feature_1_title?: string
+          feature_2_text?: string
+          feature_2_title?: string
+          hero_badge?: string
+          hero_subtitle?: string
+          hero_title_1?: string
+          hero_title_2?: string
+          id?: boolean
+          latest_subtitle?: string
+          latest_title?: string
+          meta_description?: string
+          meta_title?: string
+          primary_color?: string
+          secondary_color?: string
+          site_name?: string
+          site_tagline?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string

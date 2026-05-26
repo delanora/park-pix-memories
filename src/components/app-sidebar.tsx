@@ -7,10 +7,12 @@ import {
   LogIn,
   LogOut,
   Receipt,
+  Settings,
   Upload,
   User,
   Users,
 } from "lucide-react";
+import { useSettings } from "@/lib/settings-context";
 import {
   Sidebar,
   SidebarContent,
@@ -36,6 +38,7 @@ const operatorItems = [
   { title: "Galeria", url: "/operador/galeria", icon: Images },
   { title: "Enviar foto", url: "/operador/upload", icon: Upload },
   { title: "Vendas", url: "/operador/vendas", icon: Receipt },
+  { title: "Configurações", url: "/operador/configuracoes", icon: Settings },
 ];
 
 const customerItems = [
@@ -48,6 +51,8 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
   const { userId, email, isOperator, isCustomer, signOut } = useAuth();
+  const settings = useSettings();
+
 
   const isActive = (path: string, exact?: boolean) =>
     path === "/" || exact ? currentPath === path : currentPath.startsWith(path);
@@ -61,9 +66,9 @@ export function AppSidebar() {
           </div>
           {!collapsed && (
             <div className="flex flex-col leading-tight">
-              <span className="font-display text-base font-bold">ParkSnap</span>
+              <span className="font-display text-base font-bold">{settings.siteName}</span>
               <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                Parque Temático
+                {settings.siteTagline}
               </span>
             </div>
           )}
