@@ -79,6 +79,10 @@ function rowToDTO(row: any): SiteSettings {
     primaryColor: row.primary_color,
     secondaryColor: row.secondary_color,
     accentColor: row.accent_color,
+    backgroundColor: row.background_color,
+    cardBackgroundColor: row.card_background_color,
+    mutedBackgroundColor: row.muted_background_color,
+    foregroundColor: row.foreground_color,
   };
 }
 
