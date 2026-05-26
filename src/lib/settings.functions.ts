@@ -23,6 +23,10 @@ export type SiteSettings = {
   primaryColor: string;
   secondaryColor: string;
   accentColor: string;
+  backgroundColor: string;
+  cardBackgroundColor: string;
+  mutedBackgroundColor: string;
+  foregroundColor: string;
 };
 
 const DEFAULTS: SiteSettings = {
