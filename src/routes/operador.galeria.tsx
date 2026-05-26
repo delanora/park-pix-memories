@@ -7,6 +7,7 @@ import {
   createCustomerAndSale,
   deletePhoto,
 } from "@/lib/photos.functions";
+import { ingestLocalPhotos } from "@/lib/photos-inbox.functions";
 import { RequireRole } from "@/components/require-role";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,7 +22,8 @@ import {
 } from "@/components/ui/dialog";
 import { formatPriceBRL } from "@/lib/photo-utils";
 import { toast } from "sonner";
-import { Check, Loader2, Play, ShoppingCart, Trash2, X } from "lucide-react";
+import { Check, FolderDown, Loader2, Play, ShoppingCart, Trash2, X } from "lucide-react";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,8 +49,11 @@ function Gallery() {
   const listFn = useServerFn(listGalleryPhotos);
   const sellFn = useServerFn(createCustomerAndSale);
   const deleteFn = useServerFn(deletePhoto);
+  const ingestFn = useServerFn(ingestLocalPhotos);
   const [pendingDelete, setPendingDelete] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [ingesting, setIngesting] = useState(false);
+
 
   const { data: photos, isLoading } = useQuery({
     queryKey: ["gallery"],
@@ -156,6 +161,39 @@ function Gallery() {
         <div className="flex flex-wrap gap-2">
         <Button
           variant="outline"
+          disabled={ingesting}
+          onClick={async () => {
+            setIngesting(true);
+            try {
+              const r = await ingestFn();
+              if (r.imported > 0) {
+                toast.success(
+                  `${r.imported} foto(s) importada(s) da pasta FTP`,
+                );
+                qc.invalidateQueries({ queryKey: ["gallery"] });
+                qc.invalidateQueries({ queryKey: ["latest-photos"] });
+                qc.invalidateQueries({ queryKey: ["operator-stats"] });
+              } else {
+                toast.info("Nenhuma foto nova na pasta FTP");
+              }
+              if (r.errors.length)
+                toast.error(`Falhas: ${r.errors.slice(0, 3).join(" | ")}`);
+            } catch (err: any) {
+              toast.error(err.message ?? "Falha ao importar pasta");
+            } finally {
+              setIngesting(false);
+            }
+          }}
+        >
+          {ingesting ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <FolderDown className="mr-2 h-4 w-4" />
+          )}
+          Importar pasta FTP
+        </Button>
+        <Button
+          variant="outline"
           disabled={!photos?.length}
           onClick={() => {
             setSlideIdx(0);
@@ -165,6 +203,7 @@ function Gallery() {
           <Play className="mr-2 h-4 w-4" />
           Modo exibição
         </Button>
+
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button
