@@ -51,6 +51,10 @@ const DEFAULTS: SiteSettings = {
   primaryColor: "oklch(0.7 0.19 35)",
   secondaryColor: "oklch(0.55 0.2 285)",
   accentColor: "oklch(0.65 0.22 0)",
+  backgroundColor: "oklch(0.99 0.012 70)",
+  cardBackgroundColor: "oklch(1 0 0)",
+  mutedBackgroundColor: "oklch(0.96 0.012 60)",
+  foregroundColor: "oklch(0.22 0.045 290)",
 };
 
 function rowToDTO(row: any): SiteSettings {
