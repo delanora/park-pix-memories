@@ -161,6 +161,39 @@ function Gallery() {
         <div className="flex flex-wrap gap-2">
         <Button
           variant="outline"
+          disabled={ingesting}
+          onClick={async () => {
+            setIngesting(true);
+            try {
+              const r = await ingestFn();
+              if (r.imported > 0) {
+                toast.success(
+                  `${r.imported} foto(s) importada(s) da pasta FTP`,
+                );
+                qc.invalidateQueries({ queryKey: ["gallery"] });
+                qc.invalidateQueries({ queryKey: ["latest-photos"] });
+                qc.invalidateQueries({ queryKey: ["operator-stats"] });
+              } else {
+                toast.info("Nenhuma foto nova na pasta FTP");
+              }
+              if (r.errors.length)
+                toast.error(`Falhas: ${r.errors.slice(0, 3).join(" | ")}`);
+            } catch (err: any) {
+              toast.error(err.message ?? "Falha ao importar pasta");
+            } finally {
+              setIngesting(false);
+            }
+          }}
+        >
+          {ingesting ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <FolderDown className="mr-2 h-4 w-4" />
+          )}
+          Importar pasta FTP
+        </Button>
+        <Button
+          variant="outline"
           disabled={!photos?.length}
           onClick={() => {
             setSlideIdx(0);
@@ -170,6 +203,7 @@ function Gallery() {
           <Play className="mr-2 h-4 w-4" />
           Modo exibição
         </Button>
+
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button
