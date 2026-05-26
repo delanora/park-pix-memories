@@ -117,6 +117,10 @@ const UpdateSchema = z.object({
   primaryColor: z.string().min(3).max(80),
   secondaryColor: z.string().min(3).max(80),
   accentColor: z.string().min(3).max(80),
+  backgroundColor: z.string().min(3).max(80),
+  cardBackgroundColor: z.string().min(3).max(80),
+  mutedBackgroundColor: z.string().min(3).max(80),
+  foregroundColor: z.string().min(3).max(80),
 });
 
 export const updateSiteSettings = createServerFn({ method: "POST" })
