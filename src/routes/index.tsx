@@ -5,18 +5,9 @@ import { listLatestPhotos } from "@/lib/photos.functions";
 import { Button } from "@/components/ui/button";
 import { Sparkles, ShieldCheck, Download } from "lucide-react";
 import { formatPriceBRL } from "@/lib/photo-utils";
+import { useSettings } from "@/lib/settings-context";
 
 export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "ParkSnap — Suas memórias do parque em um clique" },
-      {
-        name: "description",
-        content:
-          "Encontre, compre e baixe as fotos das atrações do parque temático em segundos.",
-      },
-    ],
-  }),
   component: Landing,
 });
 
@@ -26,6 +17,12 @@ function Landing() {
     queryKey: ["latest-photos"],
     queryFn: () => fetchLatest(),
   });
+  const s = useSettings();
+
+  const features = [
+    { icon: ShieldCheck, title: s.feature1Title, text: s.feature1Text },
+    { icon: Download, title: s.feature2Title, text: s.feature2Text },
+  ];
 
   return (
     <div className="flex flex-col">
@@ -35,22 +32,21 @@ function Landing() {
         <div className="mx-auto max-w-5xl text-center">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-4 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur">
             <Sparkles className="h-3.5 w-3.5 text-primary" />
-            Memórias inesquecíveis, prontas em segundos
+            {s.heroBadge}
           </div>
           <h1 className="font-display text-4xl font-bold leading-tight tracking-tight md:text-6xl">
-            Suas fotos do parque,{" "}
-            <span className="text-gradient-sunset">do jeito que aconteceu.</span>
+            {s.heroTitle1}{" "}
+            <span className="text-gradient-sunset">{s.heroTitle2}</span>
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-base text-muted-foreground md:text-lg">
-            Fotografamos você nas atrações. Você escolhe quais quer levar,
-            paga com o operador e baixa todas em alta resolução.
+            {s.heroSubtitle}
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Button asChild size="lg" className="bg-gradient-sunset shadow-glow">
-              <Link to="/login-cliente">Já comprei — entrar</Link>
+              <Link to="/login-cliente">{s.ctaCustomer}</Link>
             </Button>
             <Button asChild size="lg" variant="outline">
-              <Link to="/login-operador">Sou operador</Link>
+              <Link to="/login-operador">{s.ctaOperator}</Link>
             </Button>
           </div>
         </div>
@@ -59,18 +55,7 @@ function Landing() {
       {/* Features */}
       <section className="px-6 pb-12">
         <div className="mx-auto grid max-w-3xl gap-4 md:grid-cols-2">
-          {[
-            {
-              icon: ShieldCheck,
-              title: "Suas fotos, protegidas",
-              text: "Acesso só com seu telefone e senha. Sem compartilhamento.",
-            },
-            {
-              icon: Download,
-              title: "Download em alta",
-              text: "Baixe individualmente ou todas de uma vez em um único arquivo.",
-            },
-          ].map((f) => (
+          {features.map((f) => (
             <div
               key={f.title}
               className="rounded-2xl border border-border bg-card p-5 shadow-soft"
@@ -91,11 +76,9 @@ function Landing() {
           <div className="mb-5 flex items-end justify-between">
             <div>
               <h2 className="font-display text-2xl font-bold md:text-3xl">
-                Últimas fotos
+                {s.latestTitle}
               </h2>
-              <p className="text-sm text-muted-foreground">
-                As 30 capturas mais recentes do parque.
-              </p>
+              <p className="text-sm text-muted-foreground">{s.latestSubtitle}</p>
             </div>
           </div>
           {!photos?.length ? (
@@ -129,3 +112,4 @@ function Landing() {
     </div>
   );
 }
+
