@@ -23,6 +23,10 @@ export type SiteSettings = {
   primaryColor: string;
   secondaryColor: string;
   accentColor: string;
+  backgroundColor: string;
+  cardBackgroundColor: string;
+  mutedBackgroundColor: string;
+  foregroundColor: string;
 };
 
 const DEFAULTS: SiteSettings = {
@@ -47,6 +51,10 @@ const DEFAULTS: SiteSettings = {
   primaryColor: "oklch(0.7 0.19 35)",
   secondaryColor: "oklch(0.55 0.2 285)",
   accentColor: "oklch(0.65 0.22 0)",
+  backgroundColor: "oklch(0.99 0.012 70)",
+  cardBackgroundColor: "oklch(1 0 0)",
+  mutedBackgroundColor: "oklch(0.96 0.012 60)",
+  foregroundColor: "oklch(0.22 0.045 290)",
 };
 
 function rowToDTO(row: any): SiteSettings {
@@ -71,6 +79,10 @@ function rowToDTO(row: any): SiteSettings {
     primaryColor: row.primary_color,
     secondaryColor: row.secondary_color,
     accentColor: row.accent_color,
+    backgroundColor: row.background_color,
+    cardBackgroundColor: row.card_background_color,
+    mutedBackgroundColor: row.muted_background_color,
+    foregroundColor: row.foreground_color,
   };
 }
 
@@ -105,6 +117,10 @@ const UpdateSchema = z.object({
   primaryColor: z.string().min(3).max(80),
   secondaryColor: z.string().min(3).max(80),
   accentColor: z.string().min(3).max(80),
+  backgroundColor: z.string().min(3).max(80),
+  cardBackgroundColor: z.string().min(3).max(80),
+  mutedBackgroundColor: z.string().min(3).max(80),
+  foregroundColor: z.string().min(3).max(80),
 });
 
 export const updateSiteSettings = createServerFn({ method: "POST" })
@@ -142,6 +158,10 @@ export const updateSiteSettings = createServerFn({ method: "POST" })
         primary_color: data.primaryColor,
         secondary_color: data.secondaryColor,
         accent_color: data.accentColor,
+        background_color: data.backgroundColor,
+        card_background_color: data.cardBackgroundColor,
+        muted_background_color: data.mutedBackgroundColor,
+        foreground_color: data.foregroundColor,
         updated_at: new Date().toISOString(),
       });
     if (error) throw new Error(error.message);

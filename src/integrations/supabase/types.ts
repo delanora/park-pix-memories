@@ -134,12 +134,15 @@ export type Database = {
       site_settings: {
         Row: {
           accent_color: string
+          background_color: string
+          card_background_color: string
           cta_customer: string
           cta_operator: string
           feature_1_text: string
           feature_1_title: string
           feature_2_text: string
           feature_2_title: string
+          foreground_color: string
           hero_badge: string
           hero_subtitle: string
           hero_title_1: string
@@ -149,6 +152,7 @@ export type Database = {
           latest_title: string
           meta_description: string
           meta_title: string
+          muted_background_color: string
           primary_color: string
           secondary_color: string
           site_name: string
@@ -157,12 +161,15 @@ export type Database = {
         }
         Insert: {
           accent_color?: string
+          background_color?: string
+          card_background_color?: string
           cta_customer?: string
           cta_operator?: string
           feature_1_text?: string
           feature_1_title?: string
           feature_2_text?: string
           feature_2_title?: string
+          foreground_color?: string
           hero_badge?: string
           hero_subtitle?: string
           hero_title_1?: string
@@ -172,6 +179,7 @@ export type Database = {
           latest_title?: string
           meta_description?: string
           meta_title?: string
+          muted_background_color?: string
           primary_color?: string
           secondary_color?: string
           site_name?: string
@@ -180,12 +188,15 @@ export type Database = {
         }
         Update: {
           accent_color?: string
+          background_color?: string
+          card_background_color?: string
           cta_customer?: string
           cta_operator?: string
           feature_1_text?: string
           feature_1_title?: string
           feature_2_text?: string
           feature_2_title?: string
+          foreground_color?: string
           hero_badge?: string
           hero_subtitle?: string
           hero_title_1?: string
@@ -195,6 +206,7 @@ export type Database = {
           latest_title?: string
           meta_description?: string
           meta_title?: string
+          muted_background_color?: string
           primary_color?: string
           secondary_color?: string
           site_name?: string
