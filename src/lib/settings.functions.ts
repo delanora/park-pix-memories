@@ -158,6 +158,10 @@ export const updateSiteSettings = createServerFn({ method: "POST" })
         primary_color: data.primaryColor,
         secondary_color: data.secondaryColor,
         accent_color: data.accentColor,
+        background_color: data.backgroundColor,
+        card_background_color: data.cardBackgroundColor,
+        muted_background_color: data.mutedBackgroundColor,
+        foreground_color: data.foregroundColor,
         updated_at: new Date().toISOString(),
       });
     if (error) throw new Error(error.message);
