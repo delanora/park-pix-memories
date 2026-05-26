@@ -7,6 +7,7 @@ import {
   createCustomerAndSale,
   deletePhoto,
 } from "@/lib/photos.functions";
+import { ingestLocalPhotos } from "@/lib/photos-inbox.functions";
 import { RequireRole } from "@/components/require-role";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,7 +22,8 @@ import {
 } from "@/components/ui/dialog";
 import { formatPriceBRL } from "@/lib/photo-utils";
 import { toast } from "sonner";
-import { Check, Loader2, Play, ShoppingCart, Trash2, X } from "lucide-react";
+import { Check, FolderDown, Loader2, Play, ShoppingCart, Trash2, X } from "lucide-react";
+
 import {
   AlertDialog,
   AlertDialogAction,
