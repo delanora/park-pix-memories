@@ -24,6 +24,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     root.style.setProperty("--sidebar-ring", settings.primaryColor);
     root.style.setProperty("--secondary", settings.secondaryColor);
     root.style.setProperty("--accent", settings.accentColor);
+    root.style.setProperty("--background", settings.backgroundColor);
+    root.style.setProperty("--card", settings.cardBackgroundColor);
+    root.style.setProperty("--muted", settings.mutedBackgroundColor);
+    root.style.setProperty("--foreground", settings.foregroundColor);
     root.style.setProperty(
       "--gradient-sunset",
       `linear-gradient(135deg, ${settings.primaryColor} 0%, ${settings.accentColor} 60%, ${settings.secondaryColor} 100%)`,
