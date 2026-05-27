@@ -7,7 +7,14 @@ import {
   uploadFileToBucket,
   deleteFilesFromBucket,
 } from "./photo-storage.server";
-import { normalizePhone, phoneToEmail, birthdateToPassword } from "./photo-utils";
+import { normalizePhone, birthdateToPassword } from "./photo-utils";
+import { getOperatorTenantId, getTenantBySlug } from "./tenant.server";
+
+const DEFAULT_TENANT_ID = "00000000-0000-0000-0000-000000000001";
+
+function phoneToTenantEmail(phone: string, slug: string) {
+  return `${phone}@${slug}.parque.local`;
+}
 
 export type PhotoDTO = {
   id: string;
