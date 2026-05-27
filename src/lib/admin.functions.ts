@@ -171,3 +171,64 @@ export const getPublicTenantBySlug = createServerFn({ method: "GET" })
       .maybeSingle();
     return tenant;
   });
+
+const TenantIdInput = z.object({ tenantId: z.string().uuid() });
+
+export type OperatorDTO = {
+  id: string;
+  email: string | null;
+  createdAt: string;
+  lastSignInAt: string | null;
+};
+
+export const listTenantOperators = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => TenantIdInput.parse(d))
+  .handler(async ({ data, context }): Promise<OperatorDTO[]> => {
+    await assertSuperAdmin(context.userId);
+    const { data: roles, error } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id, created_at")
+      .eq("tenant_id", data.tenantId)
+      .eq("role", "operator");
+    if (error) throw new Error(error.message);
+
+    const out: OperatorDTO[] = [];
+    for (const r of roles ?? []) {
+      const { data: u } = await supabaseAdmin.auth.admin.getUserById(r.user_id);
+      out.push({
+        id: r.user_id,
+        email: u.user?.email ?? null,
+        createdAt: r.created_at,
+        lastSignInAt: u.user?.last_sign_in_at ?? null,
+      });
+    }
+    return out.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  });
+
+const ResetPasswordSchema = z.object({
+  operatorId: z.string().uuid(),
+  newPassword: z.string().min(6).max(120),
+});
+
+export const resetOperatorPassword = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => ResetPasswordSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertSuperAdmin(context.userId);
+    // Confirm the target is actually an operator (not a super admin or customer)
+    const { data: role } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id")
+      .eq("user_id", data.operatorId)
+      .eq("role", "operator")
+      .maybeSingle();
+    if (!role) throw new Error("Usuário não é operador");
+
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(
+      data.operatorId,
+      { password: data.newPassword },
+    );
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });

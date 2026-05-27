@@ -3,11 +3,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Building2, Plus, Loader2, ExternalLink, Power } from "lucide-react";
+import { Building2, Plus, Loader2, ExternalLink, Power, Users, KeyRound } from "lucide-react";
 import {
   listTenants,
   createTenantWithOperator,
   updateTenant,
+  listTenantOperators,
+  resetOperatorPassword,
 } from "@/lib/admin.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,6 +53,7 @@ function TenantsPage() {
     operatorEmail: "",
     operatorPassword: "",
   });
+  const [opsTenant, setOpsTenant] = useState<{ id: string; name: string } | null>(null);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -220,6 +223,14 @@ function TenantsPage() {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        title="Ver operadores"
+                        onClick={() => setOpsTenant({ id: t.id, name: t.name })}
+                      >
+                        <Users className="h-4 w-4" />
+                      </Button>
                       <Button asChild variant="ghost" size="sm" title="Abrir landing">
                         <a href={`/e/${t.slug}`} target="_blank" rel="noreferrer">
                           <ExternalLink className="h-4 w-4" />
@@ -241,6 +252,147 @@ function TenantsPage() {
           </table>
         )}
       </Card>
+
+      <OperatorsDialog
+        tenant={opsTenant}
+        onClose={() => setOpsTenant(null)}
+      />
     </div>
+  );
+}
+
+function OperatorsDialog({
+  tenant,
+  onClose,
+}: {
+  tenant: { id: string; name: string } | null;
+  onClose: () => void;
+}) {
+  const listFn = useServerFn(listTenantOperators);
+  const resetFn = useServerFn(resetOperatorPassword);
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ["tenant-operators", tenant?.id],
+    queryFn: () => listFn({ data: { tenantId: tenant!.id } }),
+    enabled: !!tenant,
+  });
+
+  const [resetting, setResetting] = useState<string | null>(null);
+  const [pwd, setPwd] = useState("");
+  const [target, setTarget] = useState<{ id: string; email: string | null } | null>(null);
+
+  async function handleReset(e: React.FormEvent) {
+    e.preventDefault();
+    if (!target) return;
+    setResetting(target.id);
+    try {
+      await resetFn({ data: { operatorId: target.id, newPassword: pwd } });
+      toast.success(`Senha de ${target.email ?? "operador"} redefinida`);
+      setTarget(null);
+      setPwd("");
+      refetch();
+    } catch (err: any) {
+      toast.error(err.message ?? "Falha ao redefinir senha");
+    } finally {
+      setResetting(null);
+    }
+  }
+
+  return (
+    <Dialog
+      open={!!tenant}
+      onOpenChange={(o) => {
+        if (!o) {
+          onClose();
+          setTarget(null);
+          setPwd("");
+        }
+      }}
+    >
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Operadores — {tenant?.name}</DialogTitle>
+        </DialogHeader>
+
+        {isLoading ? (
+          <div className="flex h-32 items-center justify-center">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : !data?.length ? (
+          <p className="py-8 text-center text-sm text-muted-foreground">
+            Nenhum operador cadastrado nesta empresa.
+          </p>
+        ) : target ? (
+          <form onSubmit={handleReset} className="space-y-3">
+            <p className="text-sm">
+              Definir nova senha para{" "}
+              <span className="font-medium">{target.email ?? target.id}</span>
+            </p>
+            <div className="space-y-1.5">
+              <Label>Nova senha</Label>
+              <Input
+                required
+                minLength={6}
+                type="text"
+                value={pwd}
+                onChange={(e) => setPwd(e.target.value)}
+                placeholder="Mínimo 6 caracteres"
+                autoFocus
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  setTarget(null);
+                  setPwd("");
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={resetting === target.id}>
+                {resetting === target.id && (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                )}
+                Salvar nova senha
+              </Button>
+            </DialogFooter>
+          </form>
+        ) : (
+          <ul className="divide-y divide-border">
+            {data.map((o) => (
+              <li
+                key={o.id}
+                className="flex items-center justify-between gap-3 py-3"
+              >
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-medium">
+                    {o.email ?? "—"}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Criado em{" "}
+                    {new Date(o.createdAt).toLocaleDateString("pt-BR")}
+                    {o.lastSignInAt && (
+                      <>
+                        {" · "}último login{" "}
+                        {new Date(o.lastSignInAt).toLocaleDateString("pt-BR")}
+                      </>
+                    )}
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setTarget({ id: o.id, email: o.email })}
+                >
+                  <KeyRound className="h-4 w-4" />
+                  Redefinir senha
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
