@@ -3,22 +3,32 @@ import { useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
 import { Loader2 } from "lucide-react";
 
+type Role = "operator" | "customer" | "super_admin";
+
 export function RequireRole({
   role,
   children,
 }: {
-  role: "operator" | "customer";
+  role: Role;
   children: ReactNode;
 }) {
-  const { loading, userId, isOperator, isCustomer } = useAuth();
+  const { loading, userId, isOperator, isCustomer, isSuperAdmin } = useAuth();
   const navigate = useNavigate();
-  const ok = role === "operator" ? isOperator : isCustomer;
+  const ok =
+    role === "operator"
+      ? isOperator
+      : role === "customer"
+      ? isCustomer
+      : isSuperAdmin;
 
   useEffect(() => {
     if (loading) return;
     if (!userId) {
       navigate({
-        to: role === "operator" ? "/login-operador" : "/login-cliente",
+        to:
+          role === "customer"
+            ? "/login-cliente"
+            : "/login-operador",
       });
       return;
     }

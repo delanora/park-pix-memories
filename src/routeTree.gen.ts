@@ -11,14 +11,21 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginOperadorRouteImport } from './routes/login-operador'
 import { Route as LoginClienteRouteImport } from './routes/login-cliente'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OperadorIndexRouteImport } from './routes/operador.index'
 import { Route as ClienteIndexRouteImport } from './routes/cliente.index'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as OperadorVendasRouteImport } from './routes/operador.vendas'
 import { Route as OperadorUsuariosRouteImport } from './routes/operador.usuarios'
 import { Route as OperadorUploadRouteImport } from './routes/operador.upload'
 import { Route as OperadorGaleriaRouteImport } from './routes/operador.galeria'
 import { Route as OperadorConfiguracoesRouteImport } from './routes/operador.configuracoes'
+import { Route as ESlugRouteImport } from './routes/e.$slug'
+import { Route as AdminEmpresasRouteImport } from './routes/admin.empresas'
+import { Route as ESlugIndexRouteImport } from './routes/e.$slug.index'
+import { Route as ESlugLoginRouteImport } from './routes/e.$slug.login'
+import { Route as ESlugGaleriaRouteImport } from './routes/e.$slug.galeria'
 import { Route as ApiPublicHooksCleanupPhotosRouteImport } from './routes/api.public.hooks.cleanup-photos'
 
 const LoginOperadorRoute = LoginOperadorRouteImport.update({
@@ -29,6 +36,11 @@ const LoginOperadorRoute = LoginOperadorRouteImport.update({
 const LoginClienteRoute = LoginClienteRouteImport.update({
   id: '/login-cliente',
   path: '/login-cliente',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -45,6 +57,11 @@ const ClienteIndexRoute = ClienteIndexRouteImport.update({
   id: '/cliente/',
   path: '/cliente/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
 } as any)
 const OperadorVendasRoute = OperadorVendasRouteImport.update({
   id: '/operador/vendas',
@@ -71,6 +88,31 @@ const OperadorConfiguracoesRoute = OperadorConfiguracoesRouteImport.update({
   path: '/operador/configuracoes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ESlugRoute = ESlugRouteImport.update({
+  id: '/e/$slug',
+  path: '/e/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminEmpresasRoute = AdminEmpresasRouteImport.update({
+  id: '/empresas',
+  path: '/empresas',
+  getParentRoute: () => AdminRoute,
+} as any)
+const ESlugIndexRoute = ESlugIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ESlugRoute,
+} as any)
+const ESlugLoginRoute = ESlugLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => ESlugRoute,
+} as any)
+const ESlugGaleriaRoute = ESlugGaleriaRouteImport.update({
+  id: '/galeria',
+  path: '/galeria',
+  getParentRoute: () => ESlugRoute,
+} as any)
 const ApiPublicHooksCleanupPhotosRoute =
   ApiPublicHooksCleanupPhotosRouteImport.update({
     id: '/api/public/hooks/cleanup-photos',
@@ -80,90 +122,130 @@ const ApiPublicHooksCleanupPhotosRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/login-cliente': typeof LoginClienteRoute
   '/login-operador': typeof LoginOperadorRoute
+  '/admin/empresas': typeof AdminEmpresasRoute
+  '/e/$slug': typeof ESlugRouteWithChildren
   '/operador/configuracoes': typeof OperadorConfiguracoesRoute
   '/operador/galeria': typeof OperadorGaleriaRoute
   '/operador/upload': typeof OperadorUploadRoute
   '/operador/usuarios': typeof OperadorUsuariosRoute
   '/operador/vendas': typeof OperadorVendasRoute
+  '/admin/': typeof AdminIndexRoute
   '/cliente/': typeof ClienteIndexRoute
   '/operador/': typeof OperadorIndexRoute
+  '/e/$slug/galeria': typeof ESlugGaleriaRoute
+  '/e/$slug/login': typeof ESlugLoginRoute
+  '/e/$slug/': typeof ESlugIndexRoute
   '/api/public/hooks/cleanup-photos': typeof ApiPublicHooksCleanupPhotosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login-cliente': typeof LoginClienteRoute
   '/login-operador': typeof LoginOperadorRoute
+  '/admin/empresas': typeof AdminEmpresasRoute
   '/operador/configuracoes': typeof OperadorConfiguracoesRoute
   '/operador/galeria': typeof OperadorGaleriaRoute
   '/operador/upload': typeof OperadorUploadRoute
   '/operador/usuarios': typeof OperadorUsuariosRoute
   '/operador/vendas': typeof OperadorVendasRoute
+  '/admin': typeof AdminIndexRoute
   '/cliente': typeof ClienteIndexRoute
   '/operador': typeof OperadorIndexRoute
+  '/e/$slug/galeria': typeof ESlugGaleriaRoute
+  '/e/$slug/login': typeof ESlugLoginRoute
+  '/e/$slug': typeof ESlugIndexRoute
   '/api/public/hooks/cleanup-photos': typeof ApiPublicHooksCleanupPhotosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/login-cliente': typeof LoginClienteRoute
   '/login-operador': typeof LoginOperadorRoute
+  '/admin/empresas': typeof AdminEmpresasRoute
+  '/e/$slug': typeof ESlugRouteWithChildren
   '/operador/configuracoes': typeof OperadorConfiguracoesRoute
   '/operador/galeria': typeof OperadorGaleriaRoute
   '/operador/upload': typeof OperadorUploadRoute
   '/operador/usuarios': typeof OperadorUsuariosRoute
   '/operador/vendas': typeof OperadorVendasRoute
+  '/admin/': typeof AdminIndexRoute
   '/cliente/': typeof ClienteIndexRoute
   '/operador/': typeof OperadorIndexRoute
+  '/e/$slug/galeria': typeof ESlugGaleriaRoute
+  '/e/$slug/login': typeof ESlugLoginRoute
+  '/e/$slug/': typeof ESlugIndexRoute
   '/api/public/hooks/cleanup-photos': typeof ApiPublicHooksCleanupPhotosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/login-cliente'
     | '/login-operador'
+    | '/admin/empresas'
+    | '/e/$slug'
     | '/operador/configuracoes'
     | '/operador/galeria'
     | '/operador/upload'
     | '/operador/usuarios'
     | '/operador/vendas'
+    | '/admin/'
     | '/cliente/'
     | '/operador/'
+    | '/e/$slug/galeria'
+    | '/e/$slug/login'
+    | '/e/$slug/'
     | '/api/public/hooks/cleanup-photos'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login-cliente'
     | '/login-operador'
+    | '/admin/empresas'
     | '/operador/configuracoes'
     | '/operador/galeria'
     | '/operador/upload'
     | '/operador/usuarios'
     | '/operador/vendas'
+    | '/admin'
     | '/cliente'
     | '/operador'
+    | '/e/$slug/galeria'
+    | '/e/$slug/login'
+    | '/e/$slug'
     | '/api/public/hooks/cleanup-photos'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/login-cliente'
     | '/login-operador'
+    | '/admin/empresas'
+    | '/e/$slug'
     | '/operador/configuracoes'
     | '/operador/galeria'
     | '/operador/upload'
     | '/operador/usuarios'
     | '/operador/vendas'
+    | '/admin/'
     | '/cliente/'
     | '/operador/'
+    | '/e/$slug/galeria'
+    | '/e/$slug/login'
+    | '/e/$slug/'
     | '/api/public/hooks/cleanup-photos'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
   LoginClienteRoute: typeof LoginClienteRoute
   LoginOperadorRoute: typeof LoginOperadorRoute
+  ESlugRoute: typeof ESlugRouteWithChildren
   OperadorConfiguracoesRoute: typeof OperadorConfiguracoesRoute
   OperadorGaleriaRoute: typeof OperadorGaleriaRoute
   OperadorUploadRoute: typeof OperadorUploadRoute
@@ -190,6 +272,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginClienteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -210,6 +299,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/cliente/'
       preLoaderRoute: typeof ClienteIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/operador/vendas': {
       id: '/operador/vendas'
@@ -246,6 +342,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OperadorConfiguracoesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/e/$slug': {
+      id: '/e/$slug'
+      path: '/e/$slug'
+      fullPath: '/e/$slug'
+      preLoaderRoute: typeof ESlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/empresas': {
+      id: '/admin/empresas'
+      path: '/empresas'
+      fullPath: '/admin/empresas'
+      preLoaderRoute: typeof AdminEmpresasRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/e/$slug/': {
+      id: '/e/$slug/'
+      path: '/'
+      fullPath: '/e/$slug/'
+      preLoaderRoute: typeof ESlugIndexRouteImport
+      parentRoute: typeof ESlugRoute
+    }
+    '/e/$slug/login': {
+      id: '/e/$slug/login'
+      path: '/login'
+      fullPath: '/e/$slug/login'
+      preLoaderRoute: typeof ESlugLoginRouteImport
+      parentRoute: typeof ESlugRoute
+    }
+    '/e/$slug/galeria': {
+      id: '/e/$slug/galeria'
+      path: '/galeria'
+      fullPath: '/e/$slug/galeria'
+      preLoaderRoute: typeof ESlugGaleriaRouteImport
+      parentRoute: typeof ESlugRoute
+    }
     '/api/public/hooks/cleanup-photos': {
       id: '/api/public/hooks/cleanup-photos'
       path: '/api/public/hooks/cleanup-photos'
@@ -256,10 +387,38 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AdminRouteChildren {
+  AdminEmpresasRoute: typeof AdminEmpresasRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminEmpresasRoute: AdminEmpresasRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
+interface ESlugRouteChildren {
+  ESlugGaleriaRoute: typeof ESlugGaleriaRoute
+  ESlugLoginRoute: typeof ESlugLoginRoute
+  ESlugIndexRoute: typeof ESlugIndexRoute
+}
+
+const ESlugRouteChildren: ESlugRouteChildren = {
+  ESlugGaleriaRoute: ESlugGaleriaRoute,
+  ESlugLoginRoute: ESlugLoginRoute,
+  ESlugIndexRoute: ESlugIndexRoute,
+}
+
+const ESlugRouteWithChildren = ESlugRoute._addFileChildren(ESlugRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
   LoginClienteRoute: LoginClienteRoute,
   LoginOperadorRoute: LoginOperadorRoute,
+  ESlugRoute: ESlugRouteWithChildren,
   OperadorConfiguracoesRoute: OperadorConfiguracoesRoute,
   OperadorGaleriaRoute: OperadorGaleriaRoute,
   OperadorUploadRoute: OperadorUploadRoute,

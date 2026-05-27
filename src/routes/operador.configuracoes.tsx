@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Settings as SettingsIcon, Save, Loader2 } from "lucide-react";
 import {
-  getSiteSettings,
+  getMySettings,
   updateSiteSettings,
   SETTINGS_DEFAULTS,
   type SiteSettings,
@@ -83,12 +83,12 @@ function ColorField({
 }
 
 function SettingsPage() {
-  const fetchFn = useServerFn(getSiteSettings);
+  const fetchFn = useServerFn(getMySettings);
   const updateFn = useServerFn(updateSiteSettings);
   const qc = useQueryClient();
 
   const { data } = useQuery({
-    queryKey: ["site-settings"],
+    queryKey: ["my-settings"],
     queryFn: () => fetchFn(),
   });
 
@@ -106,6 +106,7 @@ function SettingsPage() {
     setSaving(true);
     try {
       await updateFn({ data: form });
+      await qc.invalidateQueries({ queryKey: ["my-settings"] });
       await qc.invalidateQueries({ queryKey: ["site-settings"] });
       toast.success("Configurações salvas");
     } catch (e: any) {

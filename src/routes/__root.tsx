@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -120,22 +121,40 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <SettingsProvider>
-          <SidebarProvider>
-            <div className="flex min-h-screen w-full bg-gradient-soft">
-              <AppSidebar />
-              <div className="flex flex-1 flex-col">
-                <header className="sticky top-0 z-10 flex h-12 items-center gap-2 border-b border-border/50 bg-background/70 px-3 backdrop-blur">
-                  <SidebarTrigger />
-                </header>
-                <main className="flex-1">
-                  <Outlet />
-                </main>
-              </div>
-            </div>
-            <Toaster richColors position="top-right" />
-          </SidebarProvider>
+          <AppShell />
+          <Toaster richColors position="top-right" />
         </SettingsProvider>
       </AuthProvider>
     </QueryClientProvider>
+  );
+}
+
+function AppShell() {
+  const path = useRouterState({ select: (s) => s.location.pathname });
+  // Admin and per-tenant public routes own their own chrome
+  const bare = path.startsWith("/admin") || path.startsWith("/e/");
+
+  if (bare) {
+    return (
+      <div className="min-h-screen w-full bg-background">
+        <Outlet />
+      </div>
+    );
+  }
+
+  return (
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full bg-gradient-soft">
+        <AppSidebar />
+        <div className="flex flex-1 flex-col">
+          <header className="sticky top-0 z-10 flex h-12 items-center gap-2 border-b border-border/50 bg-background/70 px-3 backdrop-blur">
+            <SidebarTrigger />
+          </header>
+          <main className="flex-1">
+            <Outlet />
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
   );
 }

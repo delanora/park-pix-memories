@@ -155,6 +155,33 @@ export const listLatestPhotos = createServerFn({ method: "GET" }).handler(
   },
 );
 
+const SlugOnlyInput = z.object({ slug: z.string().min(1).max(80) });
+
+export const listLatestPhotosBySlug = createServerFn({ method: "GET" })
+  .inputValidator((d: unknown) => SlugOnlyInput.parse(d))
+  .handler(async ({ data }): Promise<PhotoDTO[]> => {
+    const tenant = await getTenantBySlug(data.slug);
+    if (!tenant) return [];
+    const { data: photos, error } = await supabaseAdmin
+      .from("photos")
+      .select("id, storage_path, price, taken_at, status, sequence_number")
+      .eq("tenant_id", tenant.id)
+      .in("status", ["available", "sold"])
+      .order("sequence_number", { ascending: false })
+      .limit(30);
+    if (error) throw new Error(error.message);
+    return Promise.all(
+      (photos ?? []).map(async (p) => ({
+        id: p.id,
+        price: Number(p.price),
+        takenAt: p.taken_at,
+        status: p.status,
+        sequenceNumber: Number(p.sequence_number),
+        url: await getSignedUrl(p.storage_path, 60 * 5),
+      })),
+    );
+  });
+
 // ------------------------------------------------------------------
 // Sell selected photos to a (new or existing) customer
 // ------------------------------------------------------------------

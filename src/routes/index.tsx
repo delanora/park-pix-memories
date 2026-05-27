@@ -1,115 +1,72 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
-import { listLatestPhotos } from "@/lib/photos.functions";
 import { Button } from "@/components/ui/button";
-import { Sparkles, ShieldCheck, Download } from "lucide-react";
-import { formatPriceBRL } from "@/lib/photo-utils";
-import { useSettings } from "@/lib/settings-context";
+import { Camera, Shield, LogIn, Building2 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
+  head: () => ({ meta: [{ title: "ParkSnap — Fotografia para parques" }] }),
   component: Landing,
 });
 
 function Landing() {
-  const fetchLatest = useServerFn(listLatestPhotos);
-  const { data: photos } = useQuery({
-    queryKey: ["latest-photos"],
-    queryFn: () => fetchLatest(),
-  });
-  const s = useSettings();
-
-  const features = [
-    { icon: ShieldCheck, title: s.feature1Title, text: s.feature1Text },
-    { icon: Download, title: s.feature2Title, text: s.feature2Text },
-  ];
-
   return (
     <div className="flex flex-col">
-      {/* Hero */}
-      <section className="relative overflow-hidden px-6 py-16 md:py-24">
+      <section className="relative overflow-hidden px-6 py-20 md:py-28">
         <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-sunset opacity-10" />
-        <div className="mx-auto max-w-5xl text-center">
+        <div className="mx-auto max-w-4xl text-center">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-4 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur">
-            <Sparkles className="h-3.5 w-3.5 text-primary" />
-            {s.heroBadge}
+            <Camera className="h-3.5 w-3.5 text-primary" />
+            Plataforma SaaS de fotografia para parques temáticos
           </div>
           <h1 className="font-display text-4xl font-bold leading-tight tracking-tight md:text-6xl">
-            {s.heroTitle1}{" "}
-            <span className="text-gradient-sunset">{s.heroTitle2}</span>
+            Sua memória, <span className="text-gradient-sunset">do parque ao bolso</span>
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-base text-muted-foreground md:text-lg">
-            {s.heroSubtitle}
+            O ParkSnap conecta cada empresa cliente a seus visitantes com galeria
+            personalizada, venda no balcão e download em alta resolução.
           </p>
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Button asChild size="lg" className="bg-gradient-sunset shadow-glow">
-              <Link to="/login-cliente">{s.ctaCustomer}</Link>
-            </Button>
-            <Button asChild size="lg" variant="outline">
-              <Link to="/login-operador">{s.ctaOperator}</Link>
-            </Button>
-          </div>
+          <p className="mx-auto mt-4 max-w-2xl text-sm text-muted-foreground">
+            Cliente do parque? Acesse pela URL fornecida pela empresa:{" "}
+            <code className="rounded bg-muted px-1.5 py-0.5">/e/&lt;empresa&gt;</code>
+          </p>
         </div>
       </section>
 
-      {/* Features */}
-      <section className="px-6 pb-12">
-        <div className="mx-auto grid max-w-3xl gap-4 md:grid-cols-2">
-          {features.map((f) => (
-            <div
-              key={f.title}
-              className="rounded-2xl border border-border bg-card p-5 shadow-soft"
-            >
-              <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-sunset">
-                <f.icon className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <h3 className="font-display text-lg font-semibold">{f.title}</h3>
-              <p className="mt-1 text-sm text-muted-foreground">{f.text}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Latest photos carousel */}
       <section className="px-6 pb-20">
-        <div className="mx-auto max-w-6xl">
-          <div className="mb-5 flex items-end justify-between">
-            <div>
-              <h2 className="font-display text-2xl font-bold md:text-3xl">
-                {s.latestTitle}
-              </h2>
-              <p className="text-sm text-muted-foreground">{s.latestSubtitle}</p>
+        <div className="mx-auto grid max-w-4xl gap-4 md:grid-cols-2">
+          <Link
+            to="/login-operador"
+            className="group rounded-2xl border border-border bg-card p-6 shadow-soft transition hover:border-primary/40"
+          >
+            <div className="mb-3 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-sunset">
+              <LogIn className="h-5 w-5 text-primary-foreground" />
             </div>
-          </div>
-          {!photos?.length ? (
-            <div className="rounded-2xl border border-dashed border-border bg-card/50 p-10 text-center text-sm text-muted-foreground">
-              Ainda não há fotos por aqui. Volte em breve!
+            <h3 className="font-display text-lg font-semibold">Sou operador</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Acessar o painel da minha empresa — galeria, vendas e configurações.
+            </p>
+            <Button className="mt-4 bg-gradient-sunset shadow-glow">
+              Entrar como operador
+            </Button>
+          </Link>
+
+          <Link
+            to="/login-operador"
+            className="group rounded-2xl border border-border bg-card p-6 shadow-soft transition hover:border-foreground/40"
+          >
+            <div className="mb-3 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-foreground text-background">
+              <Shield className="h-5 w-5" />
             </div>
-          ) : (
-            <div className="overflow-hidden">
-              <div className="flex w-max gap-3 animate-marquee">
-                {[...photos, ...photos].map((p, i) => (
-                  <figure
-                    key={`${p.id}-${i}`}
-                    className="group relative h-56 w-72 shrink-0 overflow-hidden rounded-2xl border border-border bg-muted shadow-soft"
-                  >
-                    <img
-                      src={p.url}
-                      alt="Foto do parque"
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      loading="lazy"
-                    />
-                    <figcaption className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2 text-xs font-medium text-white">
-                      {formatPriceBRL(p.price)}
-                    </figcaption>
-                  </figure>
-                ))}
-              </div>
-            </div>
-          )}
+            <h3 className="font-display text-lg font-semibold">Sou super admin</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Gerenciar empresas clientes, métricas globais e operadores principais.
+            </p>
+            <Button variant="outline" className="mt-4">
+              <Building2 className="h-4 w-4" />
+              Painel admin
+            </Button>
+          </Link>
         </div>
       </section>
     </div>
   );
 }
-

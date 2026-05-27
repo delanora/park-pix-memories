@@ -27,6 +27,20 @@ function OperatorLogin() {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       await refresh();
+      // Decide destination based on role
+      const { supabase: sb } = await import("@/integrations/supabase/client");
+      const { data: { session } } = await sb.auth.getSession();
+      const uid = session?.user?.id;
+      if (uid) {
+        const { data: admin } = await sb
+          .from("super_admins")
+          .select("user_id")
+          .eq("user_id", uid)
+          .maybeSingle();
+        toast.success("Bem-vindo!");
+        navigate({ to: admin ? "/admin" : "/operador" });
+        return;
+      }
       toast.success("Bem-vindo!");
       navigate({ to: "/operador" });
     } catch (err: any) {

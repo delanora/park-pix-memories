@@ -10,6 +10,9 @@ type AuthState = {
   email: string | null;
   isOperator: boolean;
   isCustomer: boolean;
+  isSuperAdmin: boolean;
+  tenantId: string | null;
+  tenantSlug: string | null;
   refresh: () => Promise<void>;
   signOut: () => Promise<void>;
 };
@@ -22,21 +25,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [email, setEmail] = useState<string | null>(null);
   const [isOperator, setIsOperator] = useState(false);
   const [isCustomer, setIsCustomer] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [tenantId, setTenantId] = useState<string | null>(null);
+  const [tenantSlug, setTenantSlug] = useState<string | null>(null);
   const getRoleFn = useServerFn(getMyRole);
 
   const loadRole = async (uid: string | null) => {
     if (!uid) {
       setIsOperator(false);
       setIsCustomer(false);
+      setIsSuperAdmin(false);
+      setTenantId(null);
+      setTenantSlug(null);
       return;
     }
     try {
       const r = await getRoleFn();
       setIsOperator(r.isOperator);
       setIsCustomer(r.isCustomer);
+      setIsSuperAdmin(r.isSuperAdmin);
+      setTenantId(r.tenantId);
+      setTenantSlug(r.tenantSlug);
     } catch {
       setIsOperator(false);
       setIsCustomer(false);
+      setIsSuperAdmin(false);
+      setTenantId(null);
+      setTenantSlug(null);
     }
   };
 
@@ -50,12 +65,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    // CRITICAL: set up listener BEFORE getSession
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setUserId(session?.user?.id ?? null);
         setEmail(session?.user?.email ?? null);
-        // defer the role fetch
         setTimeout(() => loadRole(session?.user?.id ?? null), 0);
       },
     );
@@ -70,11 +83,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setEmail(null);
     setIsOperator(false);
     setIsCustomer(false);
+    setIsSuperAdmin(false);
+    setTenantId(null);
+    setTenantSlug(null);
   };
 
   return (
     <AuthContext.Provider
-      value={{ loading, userId, email, isOperator, isCustomer, refresh, signOut }}
+      value={{
+        loading, userId, email,
+        isOperator, isCustomer, isSuperAdmin,
+        tenantId, tenantSlug,
+        refresh, signOut,
+      }}
     >
       {children}
     </AuthContext.Provider>
