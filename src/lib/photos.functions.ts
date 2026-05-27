@@ -559,13 +559,13 @@ export const claimFirstOperator = createServerFn({ method: "POST" })
     }
     const { error } = await supabaseAdmin
       .from("user_roles")
-      .insert({ user_id: data.userId, role: "operator" });
+      .insert({ user_id: data.userId, role: "operator", tenant_id: DEFAULT_TENANT_ID });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
 
 // ------------------------------------------------------------------
-// Create a new operator (admin = any existing operator)
+// Create a new operator (within current operator's tenant)
 // ------------------------------------------------------------------
 const CreateOperatorSchema = z.object({
   email: z.string().email().max(180),
@@ -577,13 +577,7 @@ export const createOperator = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => CreateOperatorSchema.parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context;
-    const { data: op } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .eq("role", "operator")
-      .maybeSingle();
-    if (!op) throw new Error("Apenas operadores podem criar novos operadores");
+    const tenantId = await getOperatorTenantId(userId);
 
     const created = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
@@ -596,7 +590,7 @@ export const createOperator = createServerFn({ method: "POST" })
     const newId = created.data.user.id;
     const { error: roleErr } = await supabaseAdmin
       .from("user_roles")
-      .insert({ user_id: newId, role: "operator" });
+      .insert({ user_id: newId, role: "operator", tenant_id: tenantId });
     if (roleErr) throw new Error(roleErr.message);
     return { id: newId, email: data.email };
   });
