@@ -32,15 +32,27 @@ export const getMyRole = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
-    const { data: roles } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId);
+    const [{ data: roles }, { data: superRow }] = await Promise.all([
+      supabaseAdmin.from("user_roles").select("role, tenant_id").eq("user_id", userId),
+      supabaseAdmin.from("super_admins").select("user_id").eq("user_id", userId).maybeSingle(),
+    ]);
     const set = new Set((roles ?? []).map((r) => r.role));
+    const tenantId = (roles ?? []).find((r) => r.role === "operator")?.tenant_id
+      ?? (roles ?? []).find((r) => r.role === "customer")?.tenant_id
+      ?? null;
+    let tenantSlug: string | null = null;
+    if (tenantId) {
+      const { data: t } = await supabaseAdmin
+        .from("tenants").select("slug").eq("id", tenantId).maybeSingle();
+      tenantSlug = t?.slug ?? null;
+    }
     return {
       userId,
       isOperator: set.has("operator"),
       isCustomer: set.has("customer"),
+      isSuperAdmin: !!superRow,
+      tenantId,
+      tenantSlug,
     };
   });
 
