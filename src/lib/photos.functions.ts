@@ -107,24 +107,17 @@ export const uploadPhoto = createServerFn({ method: "POST" })
 export const listGalleryPhotos = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<PhotoDTO[]> => {
-    const { userId } = context;
-    const { data: hasRole } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .eq("role", "operator")
-      .maybeSingle();
-    if (!hasRole) throw new Error("Acesso negado");
-
+    const tenantId = await getOperatorTenantId(context.userId);
     const { data: photos, error } = await supabaseAdmin
       .from("photos")
       .select("id, storage_path, price, taken_at, status, sequence_number")
+      .eq("tenant_id", tenantId)
       .in("status", ["available", "sold"])
       .order("sequence_number", { ascending: false })
       .limit(30);
     if (error) throw new Error(error.message);
 
-    const rows = await Promise.all(
+    return Promise.all(
       (photos ?? []).map(async (p) => ({
         id: p.id,
         price: Number(p.price),
@@ -134,7 +127,6 @@ export const listGalleryPhotos = createServerFn({ method: "GET" })
         url: await getSignedUrl(p.storage_path, 60 * 10),
       })),
     );
-    return rows;
   });
 
 // ------------------------------------------------------------------
