@@ -7,7 +7,14 @@ import {
   uploadFileToBucket,
   deleteFilesFromBucket,
 } from "./photo-storage.server";
-import { normalizePhone, phoneToEmail, birthdateToPassword } from "./photo-utils";
+import { normalizePhone, birthdateToPassword } from "./photo-utils";
+import { getOperatorTenantId, getTenantBySlug } from "./tenant.server";
+
+const DEFAULT_TENANT_ID = "00000000-0000-0000-0000-000000000001";
+
+function phoneToTenantEmail(phone: string, slug: string) {
+  return `${phone}@${slug}.parque.local`;
+}
 
 export type PhotoDTO = {
   id: string;
@@ -25,15 +32,27 @@ export const getMyRole = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
-    const { data: roles } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId);
+    const [{ data: roles }, { data: superRow }] = await Promise.all([
+      supabaseAdmin.from("user_roles").select("role, tenant_id").eq("user_id", userId),
+      supabaseAdmin.from("super_admins").select("user_id").eq("user_id", userId).maybeSingle(),
+    ]);
     const set = new Set((roles ?? []).map((r) => r.role));
+    const tenantId = (roles ?? []).find((r) => r.role === "operator")?.tenant_id
+      ?? (roles ?? []).find((r) => r.role === "customer")?.tenant_id
+      ?? null;
+    let tenantSlug: string | null = null;
+    if (tenantId) {
+      const { data: t } = await supabaseAdmin
+        .from("tenants").select("slug").eq("id", tenantId).maybeSingle();
+      tenantSlug = t?.slug ?? null;
+    }
     return {
       userId,
       isOperator: set.has("operator"),
       isCustomer: set.has("customer"),
+      isSuperAdmin: !!superRow,
+      tenantId,
+      tenantSlug,
     };
   });
 
@@ -52,19 +71,16 @@ export const uploadPhoto = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => UploadSchema.parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context;
-    const { data: hasRole } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .eq("role", "operator")
-      .maybeSingle();
-    if (!hasRole) throw new Error("Apenas operadores podem enviar fotos");
+    const tenantId = await getOperatorTenantId(userId);
+
+    const { data: tenant } = await supabaseAdmin
+      .from("tenants").select("slug").eq("id", tenantId).single();
+    const slug = tenant?.slug ?? "default";
 
     const ext = data.fileName.split(".").pop()?.toLowerCase() ?? "jpg";
     const cleanExt = /^[a-z0-9]{2,5}$/.test(ext) ? ext : "jpg";
-    const path = `${new Date().getFullYear()}/${crypto.randomUUID()}.${cleanExt}`;
+    const path = `${slug}/${new Date().getFullYear()}/${crypto.randomUUID()}.${cleanExt}`;
 
-    // Decode base64
     const binary = Uint8Array.from(atob(data.base64), (c) => c.charCodeAt(0));
     await uploadFileToBucket(path, binary.buffer as ArrayBuffer, data.contentType);
 
@@ -74,6 +90,7 @@ export const uploadPhoto = createServerFn({ method: "POST" })
         storage_path: path,
         price: data.price,
         uploaded_by: userId,
+        tenant_id: tenantId,
       })
       .select("id")
       .single();
@@ -90,24 +107,17 @@ export const uploadPhoto = createServerFn({ method: "POST" })
 export const listGalleryPhotos = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<PhotoDTO[]> => {
-    const { userId } = context;
-    const { data: hasRole } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .eq("role", "operator")
-      .maybeSingle();
-    if (!hasRole) throw new Error("Acesso negado");
-
+    const tenantId = await getOperatorTenantId(context.userId);
     const { data: photos, error } = await supabaseAdmin
       .from("photos")
       .select("id, storage_path, price, taken_at, status, sequence_number")
+      .eq("tenant_id", tenantId)
       .in("status", ["available", "sold"])
       .order("sequence_number", { ascending: false })
       .limit(30);
     if (error) throw new Error(error.message);
 
-    const rows = await Promise.all(
+    return Promise.all(
       (photos ?? []).map(async (p) => ({
         id: p.id,
         price: Number(p.price),
@@ -117,7 +127,6 @@ export const listGalleryPhotos = createServerFn({ method: "GET" })
         url: await getSignedUrl(p.storage_path, 60 * 10),
       })),
     );
-    return rows;
   });
 
 // ------------------------------------------------------------------
@@ -161,39 +170,35 @@ export const createCustomerAndSale = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => SellSchema.parse(d))
   .handler(async ({ data, context }) => {
     const operatorId = context.userId;
-
-    const { data: opRole } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", operatorId)
-      .eq("role", "operator")
-      .maybeSingle();
-    if (!opRole) throw new Error("Apenas operadores podem vender");
+    const tenantId = await getOperatorTenantId(operatorId);
+    const { data: tenant } = await supabaseAdmin
+      .from("tenants").select("slug").eq("id", tenantId).single();
+    const slug = tenant?.slug ?? "default";
 
     const cleanPhone = normalizePhone(data.phone);
     if (cleanPhone.length < 8) throw new Error("Telefone inválido");
 
-    const email = phoneToEmail(cleanPhone);
+    const email = phoneToTenantEmail(cleanPhone, slug);
     const password = birthdateToPassword(data.birthdate);
 
-    // Find or create customer auth user (by profile phone)
+    // Find or create customer (scoped to this tenant)
     let customerId: string | null = null;
     const { data: existingProfile } = await supabaseAdmin
       .from("customer_profiles")
       .select("user_id")
+      .eq("tenant_id", tenantId)
       .eq("phone", cleanPhone)
       .maybeSingle();
 
     if (existingProfile) {
       customerId = existingProfile.user_id;
-      // Keep password in sync with birthdate (operator may correct it)
       await supabaseAdmin.auth.admin.updateUserById(customerId, { password });
     } else {
       const created = await supabaseAdmin.auth.admin.createUser({
         email,
         password,
         email_confirm: true,
-        user_metadata: { full_name: data.fullName, phone: cleanPhone },
+        user_metadata: { full_name: data.fullName, phone: cleanPhone, tenant_slug: slug },
       });
       if (created.error || !created.data.user)
         throw new Error(created.error?.message ?? "Falha ao criar cliente");
@@ -206,32 +211,33 @@ export const createCustomerAndSale = createServerFn({ method: "POST" })
           phone: cleanPhone,
           full_name: data.fullName,
           birthdate: data.birthdate,
+          tenant_id: tenantId,
         });
       if (profErr) throw new Error(profErr.message);
 
       const { error: roleErr } = await supabaseAdmin
         .from("user_roles")
-        .insert({ user_id: customerId, role: "customer" });
+        .insert({ user_id: customerId, role: "customer", tenant_id: tenantId });
       if (roleErr) throw new Error(roleErr.message);
     }
 
-    // Fetch photo prices and confirm availability
+    // Fetch photo prices and confirm availability (scoped to tenant)
     const { data: photos, error: photosErr } = await supabaseAdmin
       .from("photos")
-      .select("id, price, status")
+      .select("id, price, status, tenant_id")
       .in("id", data.photoIds);
     if (photosErr) throw new Error(photosErr.message);
     if (!photos || photos.length !== data.photoIds.length)
       throw new Error("Alguma foto não foi encontrada");
     for (const p of photos) {
+      if (p.tenant_id !== tenantId) throw new Error("Foto de outra empresa");
       if (p.status === "deleted") throw new Error("Uma das fotos foi removida");
     }
     const total = photos.reduce((sum, p) => sum + Number(p.price), 0);
 
-    // Create the sale
     const { data: sale, error: saleErr } = await supabaseAdmin
       .from("sales")
-      .insert({ customer_id: customerId, operator_id: operatorId, total })
+      .insert({ customer_id: customerId, operator_id: operatorId, total, tenant_id: tenantId })
       .select("id")
       .single();
     if (saleErr || !sale) throw new Error(saleErr?.message ?? "Falha na venda");
@@ -240,11 +246,11 @@ export const createCustomerAndSale = createServerFn({ method: "POST" })
       sale_id: sale.id,
       photo_id: p.id,
       unit_price: Number(p.price),
+      tenant_id: tenantId,
     }));
     const { error: itemsErr } = await supabaseAdmin.from("sale_items").insert(items);
     if (itemsErr) throw new Error(itemsErr.message);
 
-    // Mark photos as sold (so they aren't auto-deleted)
     const { error: updErr } = await supabaseAdmin
       .from("photos")
       .update({ status: "sold" })
@@ -545,13 +551,13 @@ export const claimFirstOperator = createServerFn({ method: "POST" })
     }
     const { error } = await supabaseAdmin
       .from("user_roles")
-      .insert({ user_id: data.userId, role: "operator" });
+      .insert({ user_id: data.userId, role: "operator", tenant_id: DEFAULT_TENANT_ID });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
 
 // ------------------------------------------------------------------
-// Create a new operator (admin = any existing operator)
+// Create a new operator (within current operator's tenant)
 // ------------------------------------------------------------------
 const CreateOperatorSchema = z.object({
   email: z.string().email().max(180),
@@ -563,13 +569,7 @@ export const createOperator = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => CreateOperatorSchema.parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context;
-    const { data: op } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .eq("role", "operator")
-      .maybeSingle();
-    if (!op) throw new Error("Apenas operadores podem criar novos operadores");
+    const tenantId = await getOperatorTenantId(userId);
 
     const created = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
@@ -582,7 +582,7 @@ export const createOperator = createServerFn({ method: "POST" })
     const newId = created.data.user.id;
     const { error: roleErr } = await supabaseAdmin
       .from("user_roles")
-      .insert({ user_id: newId, role: "operator" });
+      .insert({ user_id: newId, role: "operator", tenant_id: tenantId });
     if (roleErr) throw new Error(roleErr.message);
     return { id: newId, email: data.email };
   });

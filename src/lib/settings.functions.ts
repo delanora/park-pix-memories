@@ -2,6 +2,9 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { getOperatorTenantId } from "./tenant.server";
+
+const DEFAULT_TENANT_ID = "00000000-0000-0000-0000-000000000001";
 
 export type SiteSettings = {
   siteName: string;
@@ -86,16 +89,23 @@ function rowToDTO(row: any): SiteSettings {
   };
 }
 
-export const getSiteSettings = createServerFn({ method: "GET" }).handler(
-  async (): Promise<SiteSettings> => {
-    const { data } = await supabaseAdmin
+const SlugInput = z.object({ slug: z.string().min(1).max(80).optional() });
+
+/** Get settings by tenant slug. If no slug given, returns defaults (neutral theme). */
+export const getSiteSettings = createServerFn({ method: "GET" })
+  .inputValidator((d: unknown) => SlugInput.parse(d ?? {}))
+  .handler(async ({ data }): Promise<SiteSettings> => {
+    if (!data.slug) return DEFAULTS;
+    const { data: tenant } = await supabaseAdmin
+      .from("tenants").select("id").eq("slug", data.slug).maybeSingle();
+    if (!tenant) return DEFAULTS;
+    const { data: row } = await supabaseAdmin
       .from("site_settings")
       .select("*")
-      .eq("id", true)
+      .eq("tenant_id", tenant.id)
       .maybeSingle();
-    return rowToDTO(data);
-  },
-);
+    return rowToDTO(row);
+  });
 
 const UpdateSchema = z.object({
   siteName: z.string().min(1).max(80),
@@ -127,18 +137,12 @@ export const updateSiteSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => UpdateSchema.parse(d))
   .handler(async ({ data, context }) => {
-    const { data: op } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", context.userId)
-      .eq("role", "operator")
-      .maybeSingle();
-    if (!op) throw new Error("Acesso negado");
+    const tenantId = await getOperatorTenantId(context.userId);
 
     const { error } = await supabaseAdmin
       .from("site_settings")
       .upsert({
-        id: true,
+        tenant_id: tenantId,
         site_name: data.siteName,
         site_tagline: data.siteTagline,
         meta_title: data.metaTitle,
@@ -168,4 +172,17 @@ export const updateSiteSettings = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-export { DEFAULTS as SETTINGS_DEFAULTS };
+/** Returns settings for the currently logged operator's own tenant. */
+export const getMySettings = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<SiteSettings> => {
+    const tenantId = await getOperatorTenantId(context.userId);
+    const { data: row } = await supabaseAdmin
+      .from("site_settings")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .maybeSingle();
+    return rowToDTO(row);
+  });
+
+export { DEFAULTS as SETTINGS_DEFAULTS, DEFAULT_TENANT_ID };

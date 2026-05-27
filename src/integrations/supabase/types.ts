@@ -20,6 +20,7 @@ export type Database = {
           created_at: string
           full_name: string
           phone: string
+          tenant_id: string
           user_id: string
         }
         Insert: {
@@ -27,6 +28,7 @@ export type Database = {
           created_at?: string
           full_name: string
           phone: string
+          tenant_id: string
           user_id: string
         }
         Update: {
@@ -34,9 +36,18 @@ export type Database = {
           created_at?: string
           full_name?: string
           phone?: string
+          tenant_id?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "customer_profiles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       photos: {
         Row: {
@@ -47,6 +58,7 @@ export type Database = {
           status: Database["public"]["Enums"]["photo_status"]
           storage_path: string
           taken_at: string
+          tenant_id: string
           uploaded_by: string | null
         }
         Insert: {
@@ -57,6 +69,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["photo_status"]
           storage_path: string
           taken_at?: string
+          tenant_id: string
           uploaded_by?: string | null
         }
         Update: {
@@ -67,27 +80,39 @@ export type Database = {
           status?: Database["public"]["Enums"]["photo_status"]
           storage_path?: string
           taken_at?: string
+          tenant_id?: string
           uploaded_by?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "photos_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sale_items: {
         Row: {
           id: string
           photo_id: string
           sale_id: string
+          tenant_id: string
           unit_price: number
         }
         Insert: {
           id?: string
           photo_id: string
           sale_id: string
+          tenant_id: string
           unit_price?: number
         }
         Update: {
           id?: string
           photo_id?: string
           sale_id?: string
+          tenant_id?: string
           unit_price?: number
         }
         Relationships: [
@@ -105,6 +130,13 @@ export type Database = {
             referencedRelation: "sales"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "sale_items_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
         ]
       }
       sales: {
@@ -113,6 +145,7 @@ export type Database = {
           customer_id: string
           id: string
           operator_id: string | null
+          tenant_id: string
           total: number
         }
         Insert: {
@@ -120,6 +153,7 @@ export type Database = {
           customer_id: string
           id?: string
           operator_id?: string | null
+          tenant_id: string
           total?: number
         }
         Update: {
@@ -127,9 +161,18 @@ export type Database = {
           customer_id?: string
           id?: string
           operator_id?: string | null
+          tenant_id?: string
           total?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "sales_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       site_settings: {
         Row: {
@@ -147,7 +190,6 @@ export type Database = {
           hero_subtitle: string
           hero_title_1: string
           hero_title_2: string
-          id: boolean
           latest_subtitle: string
           latest_title: string
           meta_description: string
@@ -157,6 +199,7 @@ export type Database = {
           secondary_color: string
           site_name: string
           site_tagline: string
+          tenant_id: string
           updated_at: string
         }
         Insert: {
@@ -174,7 +217,6 @@ export type Database = {
           hero_subtitle?: string
           hero_title_1?: string
           hero_title_2?: string
-          id?: boolean
           latest_subtitle?: string
           latest_title?: string
           meta_description?: string
@@ -184,6 +226,7 @@ export type Database = {
           secondary_color?: string
           site_name?: string
           site_tagline?: string
+          tenant_id: string
           updated_at?: string
         }
         Update: {
@@ -201,7 +244,6 @@ export type Database = {
           hero_subtitle?: string
           hero_title_1?: string
           hero_title_2?: string
-          id?: boolean
           latest_subtitle?: string
           latest_title?: string
           meta_description?: string
@@ -211,7 +253,55 @@ export type Database = {
           secondary_color?: string
           site_name?: string
           site_tagline?: string
+          tenant_id?: string
           updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_settings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      super_admins: {
+        Row: {
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tenants: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          slug: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
+          status?: string
         }
         Relationships: []
       }
@@ -220,27 +310,39 @@ export type Database = {
           created_at: string
           id: string
           role: Database["public"]["Enums"]["app_role"]
+          tenant_id: string
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
           role: Database["public"]["Enums"]["app_role"]
+          tenant_id: string
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          tenant_id?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      get_my_tenant_ids: { Args: { _user_id: string }; Returns: string[] }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -248,6 +350,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_role_in_tenant: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _tenant_id: string
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_super_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "operator" | "customer"
