@@ -3,11 +3,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Building2, Plus, Loader2, ExternalLink, Power } from "lucide-react";
+import { Building2, Plus, Loader2, ExternalLink, Power, Users, KeyRound } from "lucide-react";
 import {
   listTenants,
   createTenantWithOperator,
   updateTenant,
+  listTenantOperators,
+  resetOperatorPassword,
 } from "@/lib/admin.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
