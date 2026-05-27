@@ -5,6 +5,7 @@ import {
   uploadFileToBucket,
   deleteFilesFromBucket,
 } from "./photo-storage.server";
+import { getOperatorTenantId } from "./tenant.server";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
@@ -26,30 +27,30 @@ async function ensureDir(dir: string) {
 }
 
 /**
- * Reads all new files from the local "photos-inbox" folder (or the path in
- * PHOTOS_INBOX_DIR), uploads them to the storage bucket, inserts a row in
- * `photos` and then moves the processed file to `<inbox>/processed/`.
+ * Reads new files from the local inbox folder and imports them as photos
+ * belonging to the operator's tenant.
  *
- * Use this when running the project on your own server with an FTP folder
- * pointing into `photos-inbox/`. Files that fail to ingest are moved to
- * `<inbox>/failed/` so the operator can inspect them.
+ * Folder layout (multi-tenant):
+ *   photos-inbox/
+ *     {tenant_slug}/        ← files dropped here by FTP
+ *     {tenant_slug}/processed/
+ *     {tenant_slug}/failed/
+ *
+ * The operator only sees and imports files from their own tenant's subfolder.
  */
 export const ingestLocalPhotos = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
+    const tenantId = await getOperatorTenantId(userId);
+    const { data: tenant } = await supabaseAdmin
+      .from("tenants").select("slug").eq("id", tenantId).single();
+    const slug = tenant?.slug ?? "default";
 
-    const { data: hasRole } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .eq("role", "operator")
-      .maybeSingle();
-    if (!hasRole) throw new Error("Apenas operadores podem importar fotos");
-
-    const inboxDir = path.resolve(
+    const rootDir = path.resolve(
       process.env.PHOTOS_INBOX_DIR ?? "./photos-inbox",
     );
+    const inboxDir = path.join(rootDir, slug);
     const processedDir = path.join(inboxDir, "processed");
     const failedDir = path.join(inboxDir, "failed");
     const defaultPrice = Number(process.env.PHOTOS_DEFAULT_PRICE ?? "15");
@@ -79,7 +80,7 @@ export const ingestLocalPhotos = createServerFn({ method: "POST" })
     for (const fileName of files) {
       const fullPath = path.join(inboxDir, fileName);
       const ext = fileName.split(".").pop()!.toLowerCase();
-      const storagePath = `${new Date().getFullYear()}/${crypto.randomUUID()}.${ext}`;
+      const storagePath = `${slug}/${new Date().getFullYear()}/${crypto.randomUUID()}.${ext}`;
       try {
         const bytes = await fs.readFile(fullPath);
         await uploadFileToBucket(
@@ -94,15 +95,13 @@ export const ingestLocalPhotos = createServerFn({ method: "POST" })
           storage_path: storagePath,
           price: defaultPrice,
           uploaded_by: userId,
+          tenant_id: tenantId,
         });
         if (error) {
           await deleteFilesFromBucket([storagePath]);
           throw new Error(error.message);
         }
-        // Move to processed/ to avoid reimport
-        const ts = new Date()
-          .toISOString()
-          .replace(/[:.]/g, "-");
+        const ts = new Date().toISOString().replace(/[:.]/g, "-");
         await fs.rename(
           fullPath,
           path.join(processedDir, `${ts}__${fileName}`),
@@ -110,7 +109,6 @@ export const ingestLocalPhotos = createServerFn({ method: "POST" })
         imported++;
       } catch (err: any) {
         errors.push(`${fileName}: ${err.message}`);
-        // Move to failed/ so it doesn't keep retrying every poll
         try {
           await fs.rename(fullPath, path.join(failedDir, fileName));
         } catch {
@@ -126,3 +124,4 @@ export const ingestLocalPhotos = createServerFn({ method: "POST" })
       errors,
     };
   });
+
