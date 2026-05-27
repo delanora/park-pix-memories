@@ -71,19 +71,16 @@ export const uploadPhoto = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => UploadSchema.parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context;
-    const { data: hasRole } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .eq("role", "operator")
-      .maybeSingle();
-    if (!hasRole) throw new Error("Apenas operadores podem enviar fotos");
+    const tenantId = await getOperatorTenantId(userId);
+
+    const { data: tenant } = await supabaseAdmin
+      .from("tenants").select("slug").eq("id", tenantId).single();
+    const slug = tenant?.slug ?? "default";
 
     const ext = data.fileName.split(".").pop()?.toLowerCase() ?? "jpg";
     const cleanExt = /^[a-z0-9]{2,5}$/.test(ext) ? ext : "jpg";
-    const path = `${new Date().getFullYear()}/${crypto.randomUUID()}.${cleanExt}`;
+    const path = `${slug}/${new Date().getFullYear()}/${crypto.randomUUID()}.${cleanExt}`;
 
-    // Decode base64
     const binary = Uint8Array.from(atob(data.base64), (c) => c.charCodeAt(0));
     await uploadFileToBucket(path, binary.buffer as ArrayBuffer, data.contentType);
 
@@ -93,6 +90,7 @@ export const uploadPhoto = createServerFn({ method: "POST" })
         storage_path: path,
         price: data.price,
         uploaded_by: userId,
+        tenant_id: tenantId,
       })
       .select("id")
       .single();
