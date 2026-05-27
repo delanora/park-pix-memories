@@ -178,39 +178,35 @@ export const createCustomerAndSale = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => SellSchema.parse(d))
   .handler(async ({ data, context }) => {
     const operatorId = context.userId;
-
-    const { data: opRole } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", operatorId)
-      .eq("role", "operator")
-      .maybeSingle();
-    if (!opRole) throw new Error("Apenas operadores podem vender");
+    const tenantId = await getOperatorTenantId(operatorId);
+    const { data: tenant } = await supabaseAdmin
+      .from("tenants").select("slug").eq("id", tenantId).single();
+    const slug = tenant?.slug ?? "default";
 
     const cleanPhone = normalizePhone(data.phone);
     if (cleanPhone.length < 8) throw new Error("Telefone inválido");
 
-    const email = phoneToEmail(cleanPhone);
+    const email = phoneToTenantEmail(cleanPhone, slug);
     const password = birthdateToPassword(data.birthdate);
 
-    // Find or create customer auth user (by profile phone)
+    // Find or create customer (scoped to this tenant)
     let customerId: string | null = null;
     const { data: existingProfile } = await supabaseAdmin
       .from("customer_profiles")
       .select("user_id")
+      .eq("tenant_id", tenantId)
       .eq("phone", cleanPhone)
       .maybeSingle();
 
     if (existingProfile) {
       customerId = existingProfile.user_id;
-      // Keep password in sync with birthdate (operator may correct it)
       await supabaseAdmin.auth.admin.updateUserById(customerId, { password });
     } else {
       const created = await supabaseAdmin.auth.admin.createUser({
         email,
         password,
         email_confirm: true,
-        user_metadata: { full_name: data.fullName, phone: cleanPhone },
+        user_metadata: { full_name: data.fullName, phone: cleanPhone, tenant_slug: slug },
       });
       if (created.error || !created.data.user)
         throw new Error(created.error?.message ?? "Falha ao criar cliente");
@@ -223,32 +219,33 @@ export const createCustomerAndSale = createServerFn({ method: "POST" })
           phone: cleanPhone,
           full_name: data.fullName,
           birthdate: data.birthdate,
+          tenant_id: tenantId,
         });
       if (profErr) throw new Error(profErr.message);
 
       const { error: roleErr } = await supabaseAdmin
         .from("user_roles")
-        .insert({ user_id: customerId, role: "customer" });
+        .insert({ user_id: customerId, role: "customer", tenant_id: tenantId });
       if (roleErr) throw new Error(roleErr.message);
     }
 
-    // Fetch photo prices and confirm availability
+    // Fetch photo prices and confirm availability (scoped to tenant)
     const { data: photos, error: photosErr } = await supabaseAdmin
       .from("photos")
-      .select("id, price, status")
+      .select("id, price, status, tenant_id")
       .in("id", data.photoIds);
     if (photosErr) throw new Error(photosErr.message);
     if (!photos || photos.length !== data.photoIds.length)
       throw new Error("Alguma foto não foi encontrada");
     for (const p of photos) {
+      if (p.tenant_id !== tenantId) throw new Error("Foto de outra empresa");
       if (p.status === "deleted") throw new Error("Uma das fotos foi removida");
     }
     const total = photos.reduce((sum, p) => sum + Number(p.price), 0);
 
-    // Create the sale
     const { data: sale, error: saleErr } = await supabaseAdmin
       .from("sales")
-      .insert({ customer_id: customerId, operator_id: operatorId, total })
+      .insert({ customer_id: customerId, operator_id: operatorId, total, tenant_id: tenantId })
       .select("id")
       .single();
     if (saleErr || !sale) throw new Error(saleErr?.message ?? "Falha na venda");
@@ -257,11 +254,11 @@ export const createCustomerAndSale = createServerFn({ method: "POST" })
       sale_id: sale.id,
       photo_id: p.id,
       unit_price: Number(p.price),
+      tenant_id: tenantId,
     }));
     const { error: itemsErr } = await supabaseAdmin.from("sale_items").insert(items);
     if (itemsErr) throw new Error(itemsErr.message);
 
-    // Mark photos as sold (so they aren't auto-deleted)
     const { error: updErr } = await supabaseAdmin
       .from("photos")
       .update({ status: "sold" })
