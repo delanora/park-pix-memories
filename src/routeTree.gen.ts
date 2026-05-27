@@ -11,14 +11,17 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginOperadorRouteImport } from './routes/login-operador'
 import { Route as LoginClienteRouteImport } from './routes/login-cliente'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OperadorIndexRouteImport } from './routes/operador.index'
 import { Route as ClienteIndexRouteImport } from './routes/cliente.index'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as OperadorVendasRouteImport } from './routes/operador.vendas'
 import { Route as OperadorUsuariosRouteImport } from './routes/operador.usuarios'
 import { Route as OperadorUploadRouteImport } from './routes/operador.upload'
 import { Route as OperadorGaleriaRouteImport } from './routes/operador.galeria'
 import { Route as OperadorConfiguracoesRouteImport } from './routes/operador.configuracoes'
+import { Route as AdminEmpresasRouteImport } from './routes/admin.empresas'
 import { Route as ApiPublicHooksCleanupPhotosRouteImport } from './routes/api.public.hooks.cleanup-photos'
 
 const LoginOperadorRoute = LoginOperadorRouteImport.update({
@@ -29,6 +32,11 @@ const LoginOperadorRoute = LoginOperadorRouteImport.update({
 const LoginClienteRoute = LoginClienteRouteImport.update({
   id: '/login-cliente',
   path: '/login-cliente',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -45,6 +53,11 @@ const ClienteIndexRoute = ClienteIndexRouteImport.update({
   id: '/cliente/',
   path: '/cliente/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
 } as any)
 const OperadorVendasRoute = OperadorVendasRouteImport.update({
   id: '/operador/vendas',
@@ -71,6 +84,11 @@ const OperadorConfiguracoesRoute = OperadorConfiguracoesRouteImport.update({
   path: '/operador/configuracoes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminEmpresasRoute = AdminEmpresasRouteImport.update({
+  id: '/empresas',
+  path: '/empresas',
+  getParentRoute: () => AdminRoute,
+} as any)
 const ApiPublicHooksCleanupPhotosRoute =
   ApiPublicHooksCleanupPhotosRouteImport.update({
     id: '/api/public/hooks/cleanup-photos',
@@ -80,13 +98,16 @@ const ApiPublicHooksCleanupPhotosRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/login-cliente': typeof LoginClienteRoute
   '/login-operador': typeof LoginOperadorRoute
+  '/admin/empresas': typeof AdminEmpresasRoute
   '/operador/configuracoes': typeof OperadorConfiguracoesRoute
   '/operador/galeria': typeof OperadorGaleriaRoute
   '/operador/upload': typeof OperadorUploadRoute
   '/operador/usuarios': typeof OperadorUsuariosRoute
   '/operador/vendas': typeof OperadorVendasRoute
+  '/admin/': typeof AdminIndexRoute
   '/cliente/': typeof ClienteIndexRoute
   '/operador/': typeof OperadorIndexRoute
   '/api/public/hooks/cleanup-photos': typeof ApiPublicHooksCleanupPhotosRoute
@@ -95,11 +116,13 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login-cliente': typeof LoginClienteRoute
   '/login-operador': typeof LoginOperadorRoute
+  '/admin/empresas': typeof AdminEmpresasRoute
   '/operador/configuracoes': typeof OperadorConfiguracoesRoute
   '/operador/galeria': typeof OperadorGaleriaRoute
   '/operador/upload': typeof OperadorUploadRoute
   '/operador/usuarios': typeof OperadorUsuariosRoute
   '/operador/vendas': typeof OperadorVendasRoute
+  '/admin': typeof AdminIndexRoute
   '/cliente': typeof ClienteIndexRoute
   '/operador': typeof OperadorIndexRoute
   '/api/public/hooks/cleanup-photos': typeof ApiPublicHooksCleanupPhotosRoute
@@ -107,13 +130,16 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/login-cliente': typeof LoginClienteRoute
   '/login-operador': typeof LoginOperadorRoute
+  '/admin/empresas': typeof AdminEmpresasRoute
   '/operador/configuracoes': typeof OperadorConfiguracoesRoute
   '/operador/galeria': typeof OperadorGaleriaRoute
   '/operador/upload': typeof OperadorUploadRoute
   '/operador/usuarios': typeof OperadorUsuariosRoute
   '/operador/vendas': typeof OperadorVendasRoute
+  '/admin/': typeof AdminIndexRoute
   '/cliente/': typeof ClienteIndexRoute
   '/operador/': typeof OperadorIndexRoute
   '/api/public/hooks/cleanup-photos': typeof ApiPublicHooksCleanupPhotosRoute
@@ -122,13 +148,16 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/login-cliente'
     | '/login-operador'
+    | '/admin/empresas'
     | '/operador/configuracoes'
     | '/operador/galeria'
     | '/operador/upload'
     | '/operador/usuarios'
     | '/operador/vendas'
+    | '/admin/'
     | '/cliente/'
     | '/operador/'
     | '/api/public/hooks/cleanup-photos'
@@ -137,24 +166,29 @@ export interface FileRouteTypes {
     | '/'
     | '/login-cliente'
     | '/login-operador'
+    | '/admin/empresas'
     | '/operador/configuracoes'
     | '/operador/galeria'
     | '/operador/upload'
     | '/operador/usuarios'
     | '/operador/vendas'
+    | '/admin'
     | '/cliente'
     | '/operador'
     | '/api/public/hooks/cleanup-photos'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/login-cliente'
     | '/login-operador'
+    | '/admin/empresas'
     | '/operador/configuracoes'
     | '/operador/galeria'
     | '/operador/upload'
     | '/operador/usuarios'
     | '/operador/vendas'
+    | '/admin/'
     | '/cliente/'
     | '/operador/'
     | '/api/public/hooks/cleanup-photos'
@@ -162,6 +196,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
   LoginClienteRoute: typeof LoginClienteRoute
   LoginOperadorRoute: typeof LoginOperadorRoute
   OperadorConfiguracoesRoute: typeof OperadorConfiguracoesRoute
@@ -190,6 +225,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginClienteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -210,6 +252,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/cliente/'
       preLoaderRoute: typeof ClienteIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/operador/vendas': {
       id: '/operador/vendas'
@@ -246,6 +295,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OperadorConfiguracoesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/empresas': {
+      id: '/admin/empresas'
+      path: '/empresas'
+      fullPath: '/admin/empresas'
+      preLoaderRoute: typeof AdminEmpresasRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/api/public/hooks/cleanup-photos': {
       id: '/api/public/hooks/cleanup-photos'
       path: '/api/public/hooks/cleanup-photos'
@@ -256,8 +312,21 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AdminRouteChildren {
+  AdminEmpresasRoute: typeof AdminEmpresasRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminEmpresasRoute: AdminEmpresasRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
   LoginClienteRoute: LoginClienteRoute,
   LoginOperadorRoute: LoginOperadorRoute,
   OperadorConfiguracoesRoute: OperadorConfiguracoesRoute,
@@ -272,3 +341,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
