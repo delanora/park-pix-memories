@@ -53,6 +53,7 @@ function TenantsPage() {
     operatorEmail: "",
     operatorPassword: "",
   });
+  const [opsTenant, setOpsTenant] = useState<{ id: string; name: string } | null>(null);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
