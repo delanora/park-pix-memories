@@ -367,19 +367,14 @@ export const listSales = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
-    const { data: op } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .eq("role", "operator")
-      .maybeSingle();
-    if (!op) throw new Error("Acesso negado");
+    const tenantId = await getOperatorTenantId(userId);
 
     const { data, error } = await supabaseAdmin
       .from("sales")
       .select(
         "id, total, created_at, customer_id, customer_profiles!inner(phone, full_name), sale_items(photo_id)",
       )
+      .eq("tenant_id", tenantId)
       .order("created_at", { ascending: false })
       .limit(100);
     if (error) throw new Error(error.message);
@@ -392,6 +387,7 @@ export const listSales = createServerFn({ method: "GET" })
       photoCount: (s.sale_items ?? []).length,
     }));
   });
+
 
 // ------------------------------------------------------------------
 // Operator dashboard stats
