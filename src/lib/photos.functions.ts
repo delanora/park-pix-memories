@@ -611,18 +611,13 @@ export const listOperators = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
-    const { data: op } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .eq("role", "operator")
-      .maybeSingle();
-    if (!op) throw new Error("Acesso negado");
+    const tenantId = await getOperatorTenantId(userId);
 
     const { data: roles, error } = await supabaseAdmin
       .from("user_roles")
       .select("user_id, created_at")
       .eq("role", "operator")
+      .eq("tenant_id", tenantId)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
 
@@ -637,6 +632,7 @@ export const listOperators = createServerFn({ method: "GET" })
     }
     return out;
   });
+
 
 // ------------------------------------------------------------------
 // Delete a photo (operator only) — removes file from storage and marks deleted
