@@ -51,7 +51,7 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const navigate = useNavigate();
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
-  const { userId, email, isOperator, isCustomer, signOut } = useAuth();
+  const { userId, email, isOperator, isCustomer, isSuperAdmin, signOut } = useAuth();
   const settings = useSettings();
 
 
