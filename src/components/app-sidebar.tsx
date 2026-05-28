@@ -8,6 +8,7 @@ import {
   LogOut,
   Receipt,
   Settings,
+  Shield,
   Upload,
   User,
   Users,
@@ -50,7 +51,7 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const navigate = useNavigate();
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
-  const { userId, email, isOperator, isCustomer, signOut } = useAuth();
+  const { userId, email, isOperator, isCustomer, isSuperAdmin, signOut } = useAuth();
   const settings = useSettings();
 
 
@@ -178,6 +179,19 @@ export function AppSidebar() {
               <Link to="/operador/usuarios">
                 <Users className="h-4 w-4" />
                 {!collapsed && <span>Novo operador</span>}
+              </Link>
+            </Button>
+          )}
+          {isSuperAdmin && (
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="mb-2 w-full justify-start gap-2"
+            >
+              <Link to="/admin">
+                <Shield className="h-4 w-4" />
+                {!collapsed && <span>Painel admin</span>}
               </Link>
             </Button>
           )}

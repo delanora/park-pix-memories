@@ -367,19 +367,14 @@ export const listSales = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
-    const { data: op } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .eq("role", "operator")
-      .maybeSingle();
-    if (!op) throw new Error("Acesso negado");
+    const tenantId = await getOperatorTenantId(userId);
 
     const { data, error } = await supabaseAdmin
       .from("sales")
       .select(
         "id, total, created_at, customer_id, customer_profiles!inner(phone, full_name), sale_items(photo_id)",
       )
+      .eq("tenant_id", tenantId)
       .order("created_at", { ascending: false })
       .limit(100);
     if (error) throw new Error(error.message);
@@ -393,6 +388,7 @@ export const listSales = createServerFn({ method: "GET" })
     }));
   });
 
+
 // ------------------------------------------------------------------
 // Operator dashboard stats
 // ------------------------------------------------------------------
@@ -400,27 +396,24 @@ export const getOperatorStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
-    const { data: op } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .eq("role", "operator")
-      .maybeSingle();
-    if (!op) throw new Error("Acesso negado");
+    const tenantId = await getOperatorTenantId(userId);
 
     const [available, sold, customers, sales] = await Promise.all([
       supabaseAdmin
         .from("photos")
         .select("id", { count: "exact", head: true })
+        .eq("tenant_id", tenantId)
         .eq("status", "available"),
       supabaseAdmin
         .from("photos")
         .select("id", { count: "exact", head: true })
+        .eq("tenant_id", tenantId)
         .eq("status", "sold"),
       supabaseAdmin
         .from("customer_profiles")
-        .select("user_id", { count: "exact", head: true }),
-      supabaseAdmin.from("sales").select("total"),
+        .select("user_id", { count: "exact", head: true })
+        .eq("tenant_id", tenantId),
+      supabaseAdmin.from("sales").select("total").eq("tenant_id", tenantId),
     ]);
     const revenue = (sales.data ?? []).reduce(
       (sum, s) => sum + Number(s.total),
@@ -434,6 +427,7 @@ export const getOperatorStats = createServerFn({ method: "GET" })
     };
   });
 
+
 // ------------------------------------------------------------------
 // Sales metrics dashboard (operator)
 // ------------------------------------------------------------------
@@ -441,23 +435,19 @@ export const getSalesMetrics = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
-    const { data: op } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .eq("role", "operator")
-      .maybeSingle();
-    if (!op) throw new Error("Acesso negado");
+    const tenantId = await getOperatorTenantId(userId);
 
-    // Pull all sales with their items count
+    // Pull all sales with their items count, scoped to tenant
     const { data: sales, error } = await supabaseAdmin
       .from("sales")
       .select("id, total, created_at, operator_id, sale_items(photo_id)")
+      .eq("tenant_id", tenantId)
       .order("created_at", { ascending: false })
       .limit(1000);
     if (error) throw new Error(error.message);
 
     const all = sales ?? [];
+
     const now = new Date();
     const since24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const startOfToday = new Date(
@@ -621,18 +611,13 @@ export const listOperators = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
-    const { data: op } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .eq("role", "operator")
-      .maybeSingle();
-    if (!op) throw new Error("Acesso negado");
+    const tenantId = await getOperatorTenantId(userId);
 
     const { data: roles, error } = await supabaseAdmin
       .from("user_roles")
       .select("user_id, created_at")
       .eq("role", "operator")
+      .eq("tenant_id", tenantId)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
 
@@ -647,6 +632,7 @@ export const listOperators = createServerFn({ method: "GET" })
     }
     return out;
   });
+
 
 // ------------------------------------------------------------------
 // Delete a photo (operator only) — removes file from storage and marks deleted
