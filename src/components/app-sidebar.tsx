@@ -182,6 +182,19 @@ export function AppSidebar() {
               </Link>
             </Button>
           )}
+          {isSuperAdmin && (
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="mb-2 w-full justify-start gap-2"
+            >
+              <Link to="/admin">
+                <Shield className="h-4 w-4" />
+                {!collapsed && <span>Painel admin</span>}
+              </Link>
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"
