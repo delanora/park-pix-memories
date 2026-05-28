@@ -8,6 +8,7 @@ import {
   LogOut,
   Receipt,
   Settings,
+  Shield,
   Upload,
   User,
   Users,
