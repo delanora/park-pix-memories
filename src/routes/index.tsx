@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { Camera, Shield, LogIn, Building2 } from "lucide-react";
+import { Camera, LogIn } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [{ title: "ParkSnap — Fotografia para parques" }] }),
@@ -32,10 +32,10 @@ function Landing() {
       </section>
 
       <section className="px-6 pb-20">
-        <div className="mx-auto grid max-w-4xl gap-4 md:grid-cols-2">
+        <div className="mx-auto max-w-md">
           <Link
             to="/login-operador"
-            className="group rounded-2xl border border-border bg-card p-6 shadow-soft transition hover:border-primary/40"
+            className="group block rounded-2xl border border-border bg-card p-6 shadow-soft transition hover:border-primary/40"
           >
             <div className="mb-3 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-sunset">
               <LogIn className="h-5 w-5 text-primary-foreground" />
@@ -45,24 +45,7 @@ function Landing() {
               Acessar o painel da minha empresa — galeria, vendas e configurações.
             </p>
             <Button className="mt-4 bg-gradient-sunset shadow-glow">
-              Entrar como operador
-            </Button>
-          </Link>
-
-          <Link
-            to="/login-operador"
-            className="group rounded-2xl border border-border bg-card p-6 shadow-soft transition hover:border-foreground/40"
-          >
-            <div className="mb-3 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-foreground text-background">
-              <Shield className="h-5 w-5" />
-            </div>
-            <h3 className="font-display text-lg font-semibold">Sou super admin</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Gerenciar empresas clientes, métricas globais e operadores principais.
-            </p>
-            <Button variant="outline" className="mt-4">
-              <Building2 className="h-4 w-4" />
-              Painel admin
+              Entrar
             </Button>
           </Link>
         </div>
@@ -70,3 +53,4 @@ function Landing() {
     </div>
   );
 }
+
