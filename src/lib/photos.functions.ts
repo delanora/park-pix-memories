@@ -396,27 +396,24 @@ export const getOperatorStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
-    const { data: op } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .eq("role", "operator")
-      .maybeSingle();
-    if (!op) throw new Error("Acesso negado");
+    const tenantId = await getOperatorTenantId(userId);
 
     const [available, sold, customers, sales] = await Promise.all([
       supabaseAdmin
         .from("photos")
         .select("id", { count: "exact", head: true })
+        .eq("tenant_id", tenantId)
         .eq("status", "available"),
       supabaseAdmin
         .from("photos")
         .select("id", { count: "exact", head: true })
+        .eq("tenant_id", tenantId)
         .eq("status", "sold"),
       supabaseAdmin
         .from("customer_profiles")
-        .select("user_id", { count: "exact", head: true }),
-      supabaseAdmin.from("sales").select("total"),
+        .select("user_id", { count: "exact", head: true })
+        .eq("tenant_id", tenantId),
+      supabaseAdmin.from("sales").select("total").eq("tenant_id", tenantId),
     ]);
     const revenue = (sales.data ?? []).reduce(
       (sum, s) => sum + Number(s.total),
@@ -429,6 +426,7 @@ export const getOperatorStats = createServerFn({ method: "GET" })
       revenue,
     };
   });
+
 
 // ------------------------------------------------------------------
 // Sales metrics dashboard (operator)
