@@ -435,23 +435,19 @@ export const getSalesMetrics = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
-    const { data: op } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .eq("role", "operator")
-      .maybeSingle();
-    if (!op) throw new Error("Acesso negado");
+    const tenantId = await getOperatorTenantId(userId);
 
-    // Pull all sales with their items count
+    // Pull all sales with their items count, scoped to tenant
     const { data: sales, error } = await supabaseAdmin
       .from("sales")
       .select("id, total, created_at, operator_id, sale_items(photo_id)")
+      .eq("tenant_id", tenantId)
       .order("created_at", { ascending: false })
       .limit(1000);
     if (error) throw new Error(error.message);
 
     const all = sales ?? [];
+
     const now = new Date();
     const since24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const startOfToday = new Date(
