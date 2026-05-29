@@ -174,6 +174,112 @@ export const getPublicTenantBySlug = createServerFn({ method: "GET" })
 
 const TenantIdInput = z.object({ tenantId: z.string().uuid() });
 
+export type TenantPerformance = {
+  id: string;
+  name: string;
+  slug: string;
+  revenue: number;
+  sales: number;
+  photos: number;
+  operators: number;
+};
+
+export type RevenuePoint = { month: string; total: number };
+
+export type TenantRevenueSeries = {
+  id: string;
+  name: string;
+  slug: string;
+  points: RevenuePoint[];
+};
+
+export const getAdminAnalytics = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<{
+    perTenant: TenantPerformance[];
+    revenueByMonth: RevenuePoint[];
+    revenueByMonthByTenant: TenantRevenueSeries[];
+  }> => {
+    await assertSuperAdmin(context.userId);
+
+    const { data: tenants, error } = await supabaseAdmin
+      .from("tenants")
+      .select("id, slug, name");
+    if (error) throw new Error(error.message);
+
+    const sinceDate = new Date();
+    sinceDate.setMonth(sinceDate.getMonth() - 5);
+    sinceDate.setDate(1);
+    sinceDate.setHours(0, 0, 0, 0);
+
+    // Build last 6 months keys (YYYY-MM)
+    const months: string[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+    }
+
+    const perTenant: TenantPerformance[] = [];
+    const revenueByMonthByTenant: TenantRevenueSeries[] = [];
+    const globalByMonth = new Map<string, number>(months.map((m) => [m, 0]));
+
+    for (const t of tenants ?? []) {
+      const [ops, ph, salesAll, salesRecent] = await Promise.all([
+        supabaseAdmin
+          .from("user_roles")
+          .select("id", { count: "exact", head: true })
+          .eq("tenant_id", t.id)
+          .eq("role", "operator"),
+        supabaseAdmin
+          .from("photos")
+          .select("id", { count: "exact", head: true })
+          .eq("tenant_id", t.id),
+        supabaseAdmin
+          .from("sales")
+          .select("total")
+          .eq("tenant_id", t.id),
+        supabaseAdmin
+          .from("sales")
+          .select("total, created_at")
+          .eq("tenant_id", t.id)
+          .gte("created_at", sinceDate.toISOString()),
+      ]);
+      const revenue = (salesAll.data ?? []).reduce((s, r) => s + Number(r.total), 0);
+      perTenant.push({
+        id: t.id,
+        name: t.name,
+        slug: t.slug,
+        revenue,
+        sales: salesAll.data?.length ?? 0,
+        photos: ph.count ?? 0,
+        operators: ops.count ?? 0,
+      });
+
+      const tenantByMonth = new Map<string, number>(months.map((m) => [m, 0]));
+      for (const s of salesRecent.data ?? []) {
+        const d = new Date(s.created_at);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        if (tenantByMonth.has(key)) {
+          tenantByMonth.set(key, (tenantByMonth.get(key) ?? 0) + Number(s.total));
+          globalByMonth.set(key, (globalByMonth.get(key) ?? 0) + Number(s.total));
+        }
+      }
+      revenueByMonthByTenant.push({
+        id: t.id,
+        name: t.name,
+        slug: t.slug,
+        points: months.map((m) => ({ month: m, total: tenantByMonth.get(m) ?? 0 })),
+      });
+    }
+
+    return {
+      perTenant: perTenant.sort((a, b) => b.revenue - a.revenue),
+      revenueByMonth: months.map((m) => ({ month: m, total: globalByMonth.get(m) ?? 0 })),
+      revenueByMonthByTenant,
+    };
+  });
+
 export type OperatorDTO = {
   id: string;
   email: string | null;
