@@ -4,9 +4,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { getPublicTenantBySlug } from "@/lib/admin.functions";
 import { useAuth } from "@/lib/auth-context";
 import { useSettings } from "@/lib/settings-context";
-import { Camera, LogIn, LogOut, Images } from "lucide-react";
+import { Camera, LogIn, LogOut, Images, UserCog } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+
 
 export const Route = createFileRoute("/e/$slug")({
   component: TenantLayout,
@@ -96,12 +97,20 @@ function TenantLayout() {
                 </Button>
               </>
             ) : (
-              <Button asChild size="sm" className="bg-gradient-sunset shadow-glow">
-                <Link to="/e/$slug/login" params={{ slug }}>
-                  <LogIn className="h-4 w-4" />
-                  {s.ctaCustomer}
-                </Link>
-              </Button>
+              <>
+                <Button asChild variant="ghost" size="sm">
+                  <Link to="/login-operador">
+                    <UserCog className="h-4 w-4" />
+                    Área do operador
+                  </Link>
+                </Button>
+                <Button asChild size="sm" className="bg-gradient-sunset shadow-glow">
+                  <Link to="/e/$slug/login" params={{ slug }}>
+                    <LogIn className="h-4 w-4" />
+                    {s.ctaCustomer}
+                  </Link>
+                </Button>
+              </>
             )}
           </nav>
         </div>
