@@ -97,12 +97,20 @@ function TenantLayout() {
                 </Button>
               </>
             ) : (
-              <Button asChild size="sm" className="bg-gradient-sunset shadow-glow">
-                <Link to="/e/$slug/login" params={{ slug }}>
-                  <LogIn className="h-4 w-4" />
-                  {s.ctaCustomer}
-                </Link>
-              </Button>
+              <>
+                <Button asChild variant="ghost" size="sm">
+                  <Link to="/login-operador">
+                    <UserCog className="h-4 w-4" />
+                    Área do operador
+                  </Link>
+                </Button>
+                <Button asChild size="sm" className="bg-gradient-sunset shadow-glow">
+                  <Link to="/e/$slug/login" params={{ slug }}>
+                    <LogIn className="h-4 w-4" />
+                    {s.ctaCustomer}
+                  </Link>
+                </Button>
+              </>
             )}
           </nav>
         </div>
