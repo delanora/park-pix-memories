@@ -284,6 +284,7 @@ export type Database = {
       tenants: {
         Row: {
           created_at: string
+          fee_per_photo: number
           id: string
           name: string
           slug: string
@@ -291,6 +292,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          fee_per_photo?: number
           id?: string
           name: string
           slug: string
@@ -298,6 +300,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          fee_per_photo?: number
           id?: string
           name?: string
           slug?: string

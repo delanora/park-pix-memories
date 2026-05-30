@@ -1,0 +1,1 @@
+ALTER TABLE public.tenants ADD COLUMN IF NOT EXISTS fee_per_photo numeric NOT NULL DEFAULT 0;
