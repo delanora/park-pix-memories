@@ -195,8 +195,9 @@ function TenantsPage() {
                 <th className="px-4 py-2 text-left">Slug</th>
                 <th className="px-4 py-2 text-right">Operadores</th>
                 <th className="px-4 py-2 text-right">Fotos</th>
-                <th className="px-4 py-2 text-right">Vendas</th>
-                <th className="px-4 py-2 text-right">Receita</th>
+                <th className="px-4 py-2 text-right">Taxa/foto</th>
+                <th className="px-4 py-2 text-right">Receita do mês</th>
+                <th className="px-4 py-2 text-right">Comissão do mês</th>
                 <th className="px-4 py-2 text-center">Status</th>
                 <th className="px-4 py-2 text-right">Ações</th>
               </tr>
@@ -215,8 +216,25 @@ function TenantsPage() {
                   </td>
                   <td className="px-4 py-3 text-right">{t.operatorCount}</td>
                   <td className="px-4 py-3 text-right">{t.photoCount}</td>
-                  <td className="px-4 py-3 text-right">{t.salesCount}</td>
-                  <td className="px-4 py-3 text-right">{formatPriceBRL(t.revenue)}</td>
+                  <td className="px-4 py-3 text-right">
+                    <button
+                      onClick={() => setFeeTenant({ id: t.id, name: t.name, feePerPhoto: t.feePerPhoto })}
+                      className="inline-flex items-center gap-1 rounded hover:bg-muted px-1.5 py-0.5"
+                      title="Editar taxa"
+                    >
+                      {formatPriceBRL(t.feePerPhoto)}
+                      <Pencil className="h-3 w-3 text-muted-foreground" />
+                    </button>
+                  </td>
+                  <td className="px-4 py-3 text-right font-medium">
+                    {formatPriceBRL(t.monthlyRevenue)}
+                    <div className="text-xs font-normal text-muted-foreground">
+                      {t.monthlyPhotos} foto{t.monthlyPhotos === 1 ? "" : "s"}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-right text-primary">
+                    {formatPriceBRL(t.monthlyCommission)}
+                  </td>
                   <td className="px-4 py-3 text-center">
                     <span
                       className={
@@ -230,6 +248,14 @@ function TenantsPage() {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        title="Baixar relatório mensal (PDF)"
+                        onClick={() => setReportTenant({ id: t.id, name: t.name })}
+                      >
+                        <FileDown className="h-4 w-4" />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -264,7 +290,180 @@ function TenantsPage() {
         tenant={opsTenant}
         onClose={() => setOpsTenant(null)}
       />
+      <FeeDialog
+        tenant={feeTenant}
+        onClose={() => setFeeTenant(null)}
+        onSaved={() => qc.invalidateQueries({ queryKey: ["admin-tenants"] })}
+      />
+      <ReportDialog
+        tenant={reportTenant}
+        onClose={() => setReportTenant(null)}
+      />
     </div>
+  );
+}
+
+function FeeDialog({
+  tenant,
+  onClose,
+  onSaved,
+}: {
+  tenant: { id: string; name: string; feePerPhoto: number } | null;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const updateFn = useServerFn(updateTenant);
+  const [value, setValue] = useState("0");
+  const [saving, setSaving] = useState(false);
+
+  // Sync when tenant changes
+  useStateEffect(tenant, (t) => setValue(String(t.feePerPhoto ?? 0)));
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!tenant) return;
+    const fee = Number(value.replace(",", "."));
+    if (!Number.isFinite(fee) || fee < 0) {
+      toast.error("Valor inválido");
+      return;
+    }
+    setSaving(true);
+    try {
+      await updateFn({ data: { id: tenant.id, feePerPhoto: fee } });
+      toast.success("Taxa atualizada");
+      onSaved();
+      onClose();
+    } catch (err: any) {
+      toast.error(err.message ?? "Falha ao atualizar taxa");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Dialog open={!!tenant} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Taxa por foto — {tenant?.name}</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div className="space-y-1.5">
+            <Label>Valor cobrado por foto (R$)</Label>
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              placeholder="0.99"
+              autoFocus
+            />
+            <p className="text-xs text-muted-foreground">
+              Ex.: 0.99 = 99 centavos por foto carregada. A comissão mensal será
+              calculada como taxa × número de fotos do período.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button>
+            <Button type="submit" disabled={saving}>
+              {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+              Salvar
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function useStateEffect<T>(value: T, fn: (v: NonNullable<T>) => void) {
+  // Run side-effect when value becomes non-null/changes id
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffectImpl(() => {
+    if (value) fn(value as NonNullable<T>);
+  }, [value && (value as any).id]);
+}
+
+// minimal useEffect alias to avoid extra import block
+import { useEffect as useEffectImpl } from "react";
+
+function ReportDialog({
+  tenant,
+  onClose,
+}: {
+  tenant: { id: string; name: string } | null;
+  onClose: () => void;
+}) {
+  const reportFn = useServerFn(getTenantMonthlyReport);
+  const now = new Date();
+  const [year, setYear] = useState(now.getFullYear());
+  const [month, setMonth] = useState(now.getMonth() + 1);
+  const [loading, setLoading] = useState(false);
+
+  async function handleDownload() {
+    if (!tenant) return;
+    setLoading(true);
+    try {
+      const report = await reportFn({ data: { tenantId: tenant.id, year, month } });
+      downloadTenantMonthlyReport(report);
+      toast.success("Relatório gerado");
+    } catch (err: any) {
+      toast.error(err.message ?? "Falha ao gerar relatório");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const years = [now.getFullYear(), now.getFullYear() - 1, now.getFullYear() - 2];
+  const months = [
+    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+  ];
+
+  return (
+    <Dialog open={!!tenant} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Relatório mensal — {tenant?.name}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Gera um PDF detalhado com fotos, vendas, receita e comissão do período.
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>Mês</Label>
+              <Select value={String(month)} onValueChange={(v) => setMonth(Number(v))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {months.map((m, i) => (
+                    <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Ano</Label>
+              <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {years.map((y) => (
+                    <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button>
+            <Button onClick={handleDownload} disabled={loading}>
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
+              Baixar PDF
+            </Button>
+          </DialogFooter>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
