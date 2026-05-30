@@ -10,6 +10,10 @@ export type TenantDTO = {
   name: string;
   status: string;
   createdAt: string;
+  feePerPhoto: number;
+  monthlyRevenue: number;
+  monthlyPhotos: number;
+  monthlyCommission: number;
   operatorCount: number;
   photoCount: number;
   salesCount: number;
@@ -22,13 +26,18 @@ export const listTenants = createServerFn({ method: "GET" })
     await assertSuperAdmin(context.userId);
     const { data: tenants, error } = await supabaseAdmin
       .from("tenants")
-      .select("id, slug, name, status, created_at")
+      .select("id, slug, name, status, created_at, fee_per_photo")
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
 
+    // Start of current month
+    const monthStart = new Date();
+    monthStart.setDate(1);
+    monthStart.setHours(0, 0, 0, 0);
+
     const out: TenantDTO[] = [];
     for (const t of tenants ?? []) {
-      const [ops, ph, sl] = await Promise.all([
+      const [ops, ph, sl, slMonth, phMonth] = await Promise.all([
         supabaseAdmin
           .from("user_roles")
           .select("id", { count: "exact", head: true })
@@ -42,14 +51,31 @@ export const listTenants = createServerFn({ method: "GET" })
           .from("sales")
           .select("total")
           .eq("tenant_id", t.id),
+        supabaseAdmin
+          .from("sales")
+          .select("total")
+          .eq("tenant_id", t.id)
+          .gte("created_at", monthStart.toISOString()),
+        supabaseAdmin
+          .from("photos")
+          .select("id", { count: "exact", head: true })
+          .eq("tenant_id", t.id)
+          .gte("taken_at", monthStart.toISOString()),
       ]);
       const revenue = (sl.data ?? []).reduce((s, r) => s + Number(r.total), 0);
+      const monthlyRevenue = (slMonth.data ?? []).reduce((s, r) => s + Number(r.total), 0);
+      const monthlyPhotos = phMonth.count ?? 0;
+      const feePerPhoto = Number(t.fee_per_photo ?? 0);
       out.push({
         id: t.id,
         slug: t.slug,
         name: t.name,
         status: t.status,
         createdAt: t.created_at,
+        feePerPhoto,
+        monthlyRevenue,
+        monthlyPhotos,
+        monthlyCommission: monthlyPhotos * feePerPhoto,
         operatorCount: ops.count ?? 0,
         photoCount: ph.count ?? 0,
         salesCount: sl.data?.length ?? 0,
@@ -118,8 +144,9 @@ export const createTenantWithOperator = createServerFn({ method: "POST" })
 
 const UpdateTenantSchema = z.object({
   id: z.string().uuid(),
-  name: z.string().min(2).max(120),
-  status: z.enum(["active", "suspended"]),
+  name: z.string().min(2).max(120).optional(),
+  status: z.enum(["active", "suspended"]).optional(),
+  feePerPhoto: z.number().min(0).max(10000).optional(),
 });
 
 export const updateTenant = createServerFn({ method: "POST" })
@@ -127,12 +154,117 @@ export const updateTenant = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => UpdateTenantSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context.userId);
+    const patch: { name?: string; status?: string; fee_per_photo?: number } = {};
+    if (data.name !== undefined) patch.name = data.name;
+    if (data.status !== undefined) patch.status = data.status;
+    if (data.feePerPhoto !== undefined) patch.fee_per_photo = data.feePerPhoto;
+    if (Object.keys(patch).length === 0) return { ok: true };
     const { error } = await supabaseAdmin
       .from("tenants")
-      .update({ name: data.name, status: data.status })
+      .update(patch)
       .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+const MonthlyReportSchema = z.object({
+  tenantId: z.string().uuid(),
+  year: z.number().int().min(2020).max(2100),
+  month: z.number().int().min(1).max(12),
+});
+
+export type MonthlyReportDTO = {
+  tenant: { id: string; name: string; slug: string; feePerPhoto: number };
+  period: { year: number; month: number; label: string; from: string; to: string };
+  photosCount: number;
+  salesCount: number;
+  totalRevenue: number;
+  commission: number;
+  netForClient: number;
+  daily: { date: string; photos: number; sales: number; revenue: number }[];
+};
+
+export const getTenantMonthlyReport = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => MonthlyReportSchema.parse(d))
+  .handler(async ({ data, context }): Promise<MonthlyReportDTO> => {
+    await assertSuperAdmin(context.userId);
+
+    const { data: t, error: tErr } = await supabaseAdmin
+      .from("tenants")
+      .select("id, name, slug, fee_per_photo")
+      .eq("id", data.tenantId)
+      .maybeSingle();
+    if (tErr) throw new Error(tErr.message);
+    if (!t) throw new Error("Empresa não encontrada");
+
+    const from = new Date(Date.UTC(data.year, data.month - 1, 1));
+    const to = new Date(Date.UTC(data.year, data.month, 1));
+    const fromIso = from.toISOString();
+    const toIso = to.toISOString();
+
+    const [photosRes, salesRes] = await Promise.all([
+      supabaseAdmin
+        .from("photos")
+        .select("id, taken_at")
+        .eq("tenant_id", data.tenantId)
+        .gte("taken_at", fromIso)
+        .lt("taken_at", toIso),
+      supabaseAdmin
+        .from("sales")
+        .select("id, total, created_at")
+        .eq("tenant_id", data.tenantId)
+        .gte("created_at", fromIso)
+        .lt("created_at", toIso),
+    ]);
+    if (photosRes.error) throw new Error(photosRes.error.message);
+    if (salesRes.error) throw new Error(salesRes.error.message);
+
+    const photos = photosRes.data ?? [];
+    const sales = salesRes.data ?? [];
+    const totalRevenue = sales.reduce((s, r) => s + Number(r.total), 0);
+    const feePerPhoto = Number(t.fee_per_photo ?? 0);
+    const commission = photos.length * feePerPhoto;
+
+    // Daily breakdown
+    const daysInMonth = new Date(data.year, data.month, 0).getDate();
+    const daily: { date: string; photos: number; sales: number; revenue: number }[] = [];
+    for (let d = 1; d <= daysInMonth; d++) {
+      daily.push({
+        date: `${data.year}-${String(data.month).padStart(2, "0")}-${String(d).padStart(2, "0")}`,
+        photos: 0,
+        sales: 0,
+        revenue: 0,
+      });
+    }
+    for (const p of photos) {
+      const day = new Date(p.taken_at).getUTCDate();
+      if (daily[day - 1]) daily[day - 1].photos += 1;
+    }
+    for (const s of sales) {
+      const day = new Date(s.created_at).getUTCDate();
+      if (daily[day - 1]) {
+        daily[day - 1].sales += 1;
+        daily[day - 1].revenue += Number(s.total);
+      }
+    }
+
+    const label = from.toLocaleDateString("pt-BR", {
+      month: "long",
+      year: "numeric",
+      timeZone: "UTC",
+    });
+
+    return {
+      tenant: { id: t.id, name: t.name, slug: t.slug, feePerPhoto },
+      period: { year: data.year, month: data.month, label, from: fromIso, to: toIso },
+      photosCount: photos.length,
+      salesCount: sales.length,
+      totalRevenue,
+      commission,
+      netForClient: totalRevenue - commission,
+      daily,
+    };
   });
 
 export const getGlobalStats = createServerFn({ method: "GET" })
