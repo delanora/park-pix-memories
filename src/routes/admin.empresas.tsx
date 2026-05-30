@@ -59,6 +59,8 @@ function TenantsPage() {
     operatorPassword: "",
   });
   const [opsTenant, setOpsTenant] = useState<{ id: string; name: string } | null>(null);
+  const [feeTenant, setFeeTenant] = useState<{ id: string; name: string; feePerPhoto: number } | null>(null);
+  const [reportTenant, setReportTenant] = useState<{ id: string; name: string } | null>(null);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
