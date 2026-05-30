@@ -317,7 +317,9 @@ function FeeDialog({
   const [saving, setSaving] = useState(false);
 
   // Sync when tenant changes
-  useStateEffect(tenant, (t) => setValue(String(t.feePerPhoto ?? 0)));
+  useEffect(() => {
+    if (tenant) setValue(String(tenant.feePerPhoto ?? 0));
+  }, [tenant?.id]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
