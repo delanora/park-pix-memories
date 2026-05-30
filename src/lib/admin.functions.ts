@@ -26,13 +26,18 @@ export const listTenants = createServerFn({ method: "GET" })
     await assertSuperAdmin(context.userId);
     const { data: tenants, error } = await supabaseAdmin
       .from("tenants")
-      .select("id, slug, name, status, created_at")
+      .select("id, slug, name, status, created_at, fee_per_photo")
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
 
+    // Start of current month
+    const monthStart = new Date();
+    monthStart.setDate(1);
+    monthStart.setHours(0, 0, 0, 0);
+
     const out: TenantDTO[] = [];
     for (const t of tenants ?? []) {
-      const [ops, ph, sl] = await Promise.all([
+      const [ops, ph, sl, slMonth, phMonth] = await Promise.all([
         supabaseAdmin
           .from("user_roles")
           .select("id", { count: "exact", head: true })
@@ -46,14 +51,31 @@ export const listTenants = createServerFn({ method: "GET" })
           .from("sales")
           .select("total")
           .eq("tenant_id", t.id),
+        supabaseAdmin
+          .from("sales")
+          .select("total")
+          .eq("tenant_id", t.id)
+          .gte("created_at", monthStart.toISOString()),
+        supabaseAdmin
+          .from("photos")
+          .select("id", { count: "exact", head: true })
+          .eq("tenant_id", t.id)
+          .gte("taken_at", monthStart.toISOString()),
       ]);
       const revenue = (sl.data ?? []).reduce((s, r) => s + Number(r.total), 0);
+      const monthlyRevenue = (slMonth.data ?? []).reduce((s, r) => s + Number(r.total), 0);
+      const monthlyPhotos = phMonth.count ?? 0;
+      const feePerPhoto = Number(t.fee_per_photo ?? 0);
       out.push({
         id: t.id,
         slug: t.slug,
         name: t.name,
         status: t.status,
         createdAt: t.created_at,
+        feePerPhoto,
+        monthlyRevenue,
+        monthlyPhotos,
+        monthlyCommission: monthlyPhotos * feePerPhoto,
         operatorCount: ops.count ?? 0,
         photoCount: ph.count ?? 0,
         salesCount: sl.data?.length ?? 0,
