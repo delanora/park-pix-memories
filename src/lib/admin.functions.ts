@@ -154,7 +154,7 @@ export const updateTenant = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => UpdateTenantSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context.userId);
-    const patch: Record<string, unknown> = {};
+    const patch: { name?: string; status?: string; fee_per_photo?: number } = {};
     if (data.name !== undefined) patch.name = data.name;
     if (data.status !== undefined) patch.status = data.status;
     if (data.feePerPhoto !== undefined) patch.fee_per_photo = data.feePerPhoto;
