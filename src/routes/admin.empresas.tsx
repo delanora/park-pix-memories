@@ -378,16 +378,6 @@ function FeeDialog({
   );
 }
 
-function useStateEffect<T>(value: T, fn: (v: NonNullable<T>) => void) {
-  // Run side-effect when value becomes non-null/changes id
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffectImpl(() => {
-    if (value) fn(value as NonNullable<T>);
-  }, [value && (value as any).id]);
-}
-
-// minimal useEffect alias to avoid extra import block
-import { useEffect as useEffectImpl } from "react";
 
 function ReportDialog({
   tenant,
