@@ -10,6 +10,10 @@ export type TenantDTO = {
   name: string;
   status: string;
   createdAt: string;
+  feePerPhoto: number;
+  monthlyRevenue: number;
+  monthlyPhotos: number;
+  monthlyCommission: number;
   operatorCount: number;
   photoCount: number;
   salesCount: number;
