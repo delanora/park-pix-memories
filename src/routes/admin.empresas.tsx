@@ -54,10 +54,11 @@ function TenantsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
     name: "",
-    slug: "",
+    cnpj: "",
     operatorEmail: "",
     operatorPassword: "",
   });
+
   const [opsTenant, setOpsTenant] = useState<{ id: string; name: string } | null>(null);
   const [feeTenant, setFeeTenant] = useState<{ id: string; name: string; feePerPhoto: number } | null>(null);
   const [reportTenant, setReportTenant] = useState<{ id: string; name: string } | null>(null);
