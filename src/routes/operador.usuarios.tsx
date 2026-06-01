@@ -8,17 +8,27 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2, UserPlus } from "lucide-react";
 
 export const Route = createFileRoute("/operador/usuarios")({
   head: () => ({ meta: [{ title: "Operadores | ParkSnap" }] }),
   component: () => (
-    <RequireRole role="operator">
+    <RequireRole role="operator" fullOperator>
       <OperatorsPage />
     </RequireRole>
   ),
 });
+
+type OperatorKind = "full" | "photo";
 
 function OperatorsPage() {
   const qc = useQueryClient();
@@ -28,16 +38,28 @@ function OperatorsPage() {
     queryKey: ["operators"],
     queryFn: () => listFn(),
   });
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState<{ email: string; password: string; kind: OperatorKind }>({
+    email: "",
+    password: "",
+    kind: "full",
+  });
   const [submitting, setSubmitting] = useState(false);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await createFn({ data: { email: form.email.trim(), password: form.password } });
-      toast.success(`Operador ${form.email} criado com sucesso`);
-      setForm({ email: "", password: "" });
+      await createFn({
+        data: {
+          email: form.email.trim(),
+          password: form.password,
+          restricted: form.kind === "photo",
+        },
+      });
+      toast.success(
+        `${form.kind === "photo" ? "Operador de fotos" : "Operador"} ${form.email} criado com sucesso`,
+      );
+      setForm({ email: "", password: "", kind: "full" });
       qc.invalidateQueries({ queryKey: ["operators"] });
     } catch (err: any) {
       toast.error(err.message ?? "Falha ao criar operador");
@@ -62,6 +84,26 @@ function OperatorsPage() {
             Novo operador
           </h2>
           <form onSubmit={handleCreate} className="space-y-3">
+            <div className="space-y-1.5">
+              <Label>Tipo de operador</Label>
+              <Select
+                value={form.kind}
+                onValueChange={(v) => setForm({ ...form, kind: v as OperatorKind })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="full">Operador completo</SelectItem>
+                  <SelectItem value="photo">Operador de fotos</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {form.kind === "photo"
+                  ? "Acesso apenas à galeria e envio de fotos. Sem vendas, configurações nem criação de operadores."
+                  : "Acesso total ao painel administrativo da empresa."}
+              </p>
+            </div>
             <div className="space-y-1.5">
               <Label>E-mail</Label>
               <Input
@@ -105,9 +147,16 @@ function OperatorsPage() {
           ) : (
             <ul className="divide-y divide-border">
               {data.map((o) => (
-                <li key={o.id} className="flex items-center justify-between py-2 text-sm">
-                  <span className="font-medium">{o.email ?? "—"}</span>
-                  <span className="text-xs text-muted-foreground">
+                <li key={o.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className="truncate font-medium">{o.email ?? "—"}</span>
+                    {o.restricted ? (
+                      <Badge variant="secondary" className="shrink-0">Fotos</Badge>
+                    ) : (
+                      <Badge className="shrink-0">Completo</Badge>
+                    )}
+                  </div>
+                  <span className="shrink-0 text-xs text-muted-foreground">
                     {new Date(o.createdAt).toLocaleDateString("pt-BR")}
                   </span>
                 </li>
