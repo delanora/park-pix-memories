@@ -29,7 +29,7 @@ import {
 export const Route = createFileRoute("/operador/vendas")({
   head: () => ({ meta: [{ title: "Vendas | ParkSnap" }] }),
   component: () => (
-    <RequireRole role="operator">
+    <RequireRole role="operator" fullOperator>
       <SalesPage />
     </RequireRole>
   ),

@@ -20,7 +20,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 export const Route = createFileRoute("/operador/configuracoes")({
   head: () => ({ meta: [{ title: "Configurações — ParkSnap" }] }),
   component: () => (
-    <RequireRole role="operator">
+    <RequireRole role="operator" fullOperator>
       <SettingsPage />
     </RequireRole>
   ),
