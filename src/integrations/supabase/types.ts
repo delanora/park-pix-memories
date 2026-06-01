@@ -315,6 +315,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          restricted: boolean
           role: Database["public"]["Enums"]["app_role"]
           tenant_id: string
           user_id: string
@@ -322,6 +323,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          restricted?: boolean
           role: Database["public"]["Enums"]["app_role"]
           tenant_id: string
           user_id: string
@@ -329,6 +331,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          restricted?: boolean
           role?: Database["public"]["Enums"]["app_role"]
           tenant_id?: string
           user_id?: string
