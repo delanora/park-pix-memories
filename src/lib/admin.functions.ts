@@ -85,14 +85,27 @@ export const listTenants = createServerFn({ method: "GET" })
     return out;
   });
 
-const SlugRegex = /^[a-z0-9][a-z0-9-]{1,40}$/;
+const CnpjRegex = /^\d{14}$/;
 
 const CreateTenantSchema = z.object({
-  name: z.string().min(2).max(120),
-  slug: z.string().regex(SlugRegex, "Slug inválido (use letras minúsculas, números e -)"),
+  name: z.string().trim().min(2).max(120),
+  cnpj: z.string().transform((v) => v.replace(/\D/g, "")).pipe(z.string().regex(CnpjRegex, "CNPJ deve ter 14 dígitos")),
   operatorEmail: z.string().email().max(180),
   operatorPassword: z.string().min(6).max(120),
 });
+
+// Deterministic 12-char slug from cnpj+name using SHA-256 → base36
+async function generateSlug(cnpj: string, name: string, attempt = 0): Promise<string> {
+  const seed = `${cnpj}|${name.trim().toLowerCase()}|${attempt}`;
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(seed));
+  const bytes = new Uint8Array(buf);
+  // Convert to base36 string, pick 12 chars
+  let hex = "";
+  for (const b of bytes) hex += b.toString(16).padStart(2, "0");
+  const big = BigInt("0x" + hex);
+  const s = big.toString(36);
+  return s.slice(0, 12).padStart(12, "0");
+}
 
 export const createTenantWithOperator = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -100,18 +113,29 @@ export const createTenantWithOperator = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context.userId);
 
-    // Check slug uniqueness
-    const { data: existing } = await supabaseAdmin
-      .from("tenants").select("id").eq("slug", data.slug).maybeSingle();
-    if (existing) throw new Error("Slug já está em uso");
+    // Check CNPJ uniqueness
+    const { data: existingCnpj } = await supabaseAdmin
+      .from("tenants").select("id").eq("cnpj", data.cnpj).maybeSingle();
+    if (existingCnpj) throw new Error("Já existe uma empresa com este CNPJ");
+
+    // Generate unique slug (retry on collision)
+    let slug = "";
+    for (let attempt = 0; attempt < 10; attempt++) {
+      const candidate = await generateSlug(data.cnpj, data.name, attempt);
+      const { data: clash } = await supabaseAdmin
+        .from("tenants").select("id").eq("slug", candidate).maybeSingle();
+      if (!clash) { slug = candidate; break; }
+    }
+    if (!slug) throw new Error("Não foi possível gerar um slug único");
 
     // Create tenant
     const { data: tenant, error: tErr } = await supabaseAdmin
       .from("tenants")
-      .insert({ name: data.name, slug: data.slug, status: "active" })
+      .insert({ name: data.name, slug, cnpj: data.cnpj, status: "active" })
       .select("id")
       .single();
     if (tErr || !tenant) throw new Error(tErr?.message ?? "Falha ao criar empresa");
+
 
     // Create default site_settings row
     await supabaseAdmin

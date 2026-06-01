@@ -283,6 +283,7 @@ export type Database = {
       }
       tenants: {
         Row: {
+          cnpj: string | null
           created_at: string
           fee_per_photo: number
           id: string
@@ -291,6 +292,7 @@ export type Database = {
           status: string
         }
         Insert: {
+          cnpj?: string | null
           created_at?: string
           fee_per_photo?: number
           id?: string
@@ -299,6 +301,7 @@ export type Database = {
           status?: string
         }
         Update: {
+          cnpj?: string | null
           created_at?: string
           fee_per_photo?: number
           id?: string

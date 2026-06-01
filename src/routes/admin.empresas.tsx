@@ -29,15 +29,15 @@ export const Route = createFileRoute("/admin/empresas")({
   component: TenantsPage,
 });
 
-function slugify(s: string) {
-  return s
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 40);
+function formatCnpj(s: string) {
+  const d = s.replace(/\D/g, "").slice(0, 14);
+  return d
+    .replace(/^(\d{2})(\d)/, "$1.$2")
+    .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+    .replace(/\.(\d{3})(\d)/, ".$1/$2")
+    .replace(/(\d{4})(\d)/, "$1-$2");
 }
+
 
 function TenantsPage() {
   const qc = useQueryClient();
@@ -54,10 +54,11 @@ function TenantsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
     name: "",
-    slug: "",
+    cnpj: "",
     operatorEmail: "",
     operatorPassword: "",
   });
+
   const [opsTenant, setOpsTenant] = useState<{ id: string; name: string } | null>(null);
   const [feeTenant, setFeeTenant] = useState<{ id: string; name: string; feePerPhoto: number } | null>(null);
   const [reportTenant, setReportTenant] = useState<{ id: string; name: string } | null>(null);
@@ -68,7 +69,7 @@ function TenantsPage() {
     try {
       await createFn({ data: form });
       toast.success(`Empresa ${form.name} criada`);
-      setForm({ name: "", slug: "", operatorEmail: "", operatorPassword: "" });
+      setForm({ name: "", cnpj: "", operatorEmail: "", operatorPassword: "" });
       setOpen(false);
       qc.invalidateQueries({ queryKey: ["admin-tenants"] });
       qc.invalidateQueries({ queryKey: ["admin-stats"] });
@@ -116,28 +117,24 @@ function TenantsPage() {
                 <Input
                   required
                   value={form.name}
-                  onChange={(e) => {
-                    const name = e.target.value;
-                    setForm((f) => ({
-                      ...f,
-                      name,
-                      slug: f.slug || slugify(name),
-                    }));
-                  }}
-                  placeholder="Parque das Águas"
+                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                  placeholder="Parque das Águas Ltda."
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>Slug (URL: /e/&lt;slug&gt;)</Label>
+                <Label>CNPJ</Label>
                 <Input
                   required
-                  value={form.slug}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, slug: slugify(e.target.value) }))
-                  }
-                  placeholder="parque-das-aguas"
+                  value={form.cnpj}
+                  onChange={(e) => setForm((f) => ({ ...f, cnpj: formatCnpj(e.target.value) }))}
+                  placeholder="00.000.000/0000-00"
+                  inputMode="numeric"
                 />
+                <p className="text-xs text-muted-foreground">
+                  O slug (URL <code>/e/&lt;slug&gt;</code>) é gerado automaticamente a partir do CNPJ + nome.
+                </p>
               </div>
+
               <div className="my-2 border-t border-border" />
               <p className="text-xs text-muted-foreground">
                 Operador principal — terá acesso completo desta empresa.
