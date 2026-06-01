@@ -348,6 +348,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      expire_purchased_photos: { Args: { _days?: number }; Returns: number }
       get_my_tenant_ids: { Args: { _user_id: string }; Returns: string[] }
       has_role: {
         Args: {
