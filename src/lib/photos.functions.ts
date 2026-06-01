@@ -8,7 +8,7 @@ import {
   deleteFilesFromBucket,
 } from "./photo-storage.server";
 import { normalizePhone, birthdateToPassword } from "./photo-utils";
-import { getOperatorTenantId, getTenantBySlug } from "./tenant.server";
+import { getOperatorTenantId, getTenantBySlug, assertFullOperator } from "./tenant.server";
 
 const DEFAULT_TENANT_ID = "00000000-0000-0000-0000-000000000001";
 
@@ -33,11 +33,12 @@ export const getMyRole = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { userId } = context;
     const [{ data: roles }, { data: superRow }] = await Promise.all([
-      supabaseAdmin.from("user_roles").select("role, tenant_id").eq("user_id", userId),
+      supabaseAdmin.from("user_roles").select("role, tenant_id, restricted").eq("user_id", userId),
       supabaseAdmin.from("super_admins").select("user_id").eq("user_id", userId).maybeSingle(),
     ]);
     const set = new Set((roles ?? []).map((r) => r.role));
-    const tenantId = (roles ?? []).find((r) => r.role === "operator")?.tenant_id
+    const opRow = (roles ?? []).find((r) => r.role === "operator");
+    const tenantId = opRow?.tenant_id
       ?? (roles ?? []).find((r) => r.role === "customer")?.tenant_id
       ?? null;
     let tenantSlug: string | null = null;
@@ -51,6 +52,7 @@ export const getMyRole = createServerFn({ method: "GET" })
       isOperator: set.has("operator"),
       isCustomer: set.has("customer"),
       isSuperAdmin: !!superRow,
+      isRestrictedOperator: !!(opRow as any)?.restricted,
       tenantId,
       tenantSlug,
     };
