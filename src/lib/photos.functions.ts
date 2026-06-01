@@ -199,7 +199,7 @@ export const createCustomerAndSale = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => SellSchema.parse(d))
   .handler(async ({ data, context }) => {
     const operatorId = context.userId;
-    const tenantId = await getOperatorTenantId(operatorId);
+    const tenantId = await assertFullOperator(operatorId);
     const { data: tenant } = await supabaseAdmin
       .from("tenants").select("slug").eq("id", tenantId).single();
     const slug = tenant?.slug ?? "default";
@@ -369,7 +369,8 @@ export const listSales = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
-    const tenantId = await getOperatorTenantId(userId);
+    const tenantId = await assertFullOperator(userId);
+
 
     const { data, error } = await supabaseAdmin
       .from("sales")
@@ -437,7 +438,9 @@ export const getSalesMetrics = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
-    const tenantId = await getOperatorTenantId(userId);
+    const tenantId = await assertFullOperator(userId);
+
+
 
     // Pull all sales with their items count, scoped to tenant
     const { data: sales, error } = await supabaseAdmin
