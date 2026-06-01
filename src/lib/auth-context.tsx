@@ -11,6 +11,7 @@ type AuthState = {
   isOperator: boolean;
   isCustomer: boolean;
   isSuperAdmin: boolean;
+  isRestrictedOperator: boolean;
   tenantId: string | null;
   tenantSlug: string | null;
   refresh: () => Promise<void>;
@@ -26,6 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isOperator, setIsOperator] = useState(false);
   const [isCustomer, setIsCustomer] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [isRestrictedOperator, setIsRestrictedOperator] = useState(false);
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [tenantSlug, setTenantSlug] = useState<string | null>(null);
   const getRoleFn = useServerFn(getMyRole);
@@ -35,6 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsOperator(false);
       setIsCustomer(false);
       setIsSuperAdmin(false);
+      setIsRestrictedOperator(false);
       setTenantId(null);
       setTenantSlug(null);
       return;
@@ -44,12 +47,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsOperator(r.isOperator);
       setIsCustomer(r.isCustomer);
       setIsSuperAdmin(r.isSuperAdmin);
+      setIsRestrictedOperator(!!(r as any).isRestrictedOperator);
       setTenantId(r.tenantId);
       setTenantSlug(r.tenantSlug);
     } catch {
       setIsOperator(false);
       setIsCustomer(false);
       setIsSuperAdmin(false);
+      setIsRestrictedOperator(false);
       setTenantId(null);
       setTenantSlug(null);
     }
@@ -84,6 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsOperator(false);
     setIsCustomer(false);
     setIsSuperAdmin(false);
+    setIsRestrictedOperator(false);
     setTenantId(null);
     setTenantSlug(null);
   };
@@ -92,7 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         loading, userId, email,
-        isOperator, isCustomer, isSuperAdmin,
+        isOperator, isCustomer, isSuperAdmin, isRestrictedOperator,
         tenantId, tenantSlug,
         refresh, signOut,
       }}
