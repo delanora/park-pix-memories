@@ -69,7 +69,7 @@ function TenantsPage() {
     try {
       await createFn({ data: form });
       toast.success(`Empresa ${form.name} criada`);
-      setForm({ name: "", slug: "", operatorEmail: "", operatorPassword: "" });
+      setForm({ name: "", cnpj: "", operatorEmail: "", operatorPassword: "" });
       setOpen(false);
       qc.invalidateQueries({ queryKey: ["admin-tenants"] });
       qc.invalidateQueries({ queryKey: ["admin-stats"] });
