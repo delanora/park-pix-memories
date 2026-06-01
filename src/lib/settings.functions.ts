@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { getOperatorTenantId } from "./tenant.server";
+import { getOperatorTenantId, assertFullOperator } from "./tenant.server";
 
 const DEFAULT_TENANT_ID = "00000000-0000-0000-0000-000000000001";
 
@@ -137,7 +137,7 @@ export const updateSiteSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => UpdateSchema.parse(d))
   .handler(async ({ data, context }) => {
-    const tenantId = await getOperatorTenantId(context.userId);
+    const tenantId = await assertFullOperator(context.userId);
 
     const { error } = await supabaseAdmin
       .from("site_settings")

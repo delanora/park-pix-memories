@@ -7,19 +7,24 @@ type Role = "operator" | "customer" | "super_admin";
 
 export function RequireRole({
   role,
+  fullOperator,
   children,
 }: {
   role: Role;
+  /** When true and role is "operator", restricted (photo-only) operators are denied. */
+  fullOperator?: boolean;
   children: ReactNode;
 }) {
-  const { loading, userId, isOperator, isCustomer, isSuperAdmin } = useAuth();
+  const { loading, userId, isOperator, isCustomer, isSuperAdmin, isRestrictedOperator } = useAuth();
   const navigate = useNavigate();
-  const ok =
+  const baseOk =
     role === "operator"
       ? isOperator
       : role === "customer"
       ? isCustomer
       : isSuperAdmin;
+  const ok =
+    baseOk && (role !== "operator" || !fullOperator || !isRestrictedOperator);
 
   useEffect(() => {
     if (loading) return;
@@ -33,9 +38,15 @@ export function RequireRole({
       return;
     }
     if (!ok) {
-      navigate({ to: "/" });
+      // Restricted operator trying to access a full-operator-only area:
+      // send them back to their dashboard instead of the home page.
+      if (role === "operator" && isOperator && isRestrictedOperator) {
+        navigate({ to: "/operador" });
+      } else {
+        navigate({ to: "/" });
+      }
     }
-  }, [loading, userId, ok, role, navigate]);
+  }, [loading, userId, ok, role, isOperator, isRestrictedOperator, navigate]);
 
   if (loading || !userId || !ok) {
     return (

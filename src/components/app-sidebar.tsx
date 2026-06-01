@@ -51,7 +51,7 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const navigate = useNavigate();
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
-  const { userId, email, isOperator, isCustomer, isSuperAdmin, signOut } = useAuth();
+  const { userId, email, isOperator, isCustomer, isSuperAdmin, isRestrictedOperator, signOut } = useAuth();
   const settings = useSettings();
 
 
@@ -97,19 +97,27 @@ export function AppSidebar() {
 
         {isOperator && (
           <SidebarGroup>
-            <SidebarGroupLabel>Operador</SidebarGroupLabel>
+            <SidebarGroupLabel>
+              {isRestrictedOperator ? "Operador de fotos" : "Operador"}
+            </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {operatorItems.map((item) => (
-                  <SidebarMenuItem key={item.url}>
-                    <SidebarMenuButton asChild isActive={isActive(item.url, (item as any).exact)}>
-                      <Link to={item.url}>
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                {operatorItems
+                  .filter((item) =>
+                    !isRestrictedOperator ||
+                    (item.url !== "/operador/vendas" &&
+                      item.url !== "/operador/configuracoes"),
+                  )
+                  .map((item) => (
+                    <SidebarMenuItem key={item.url}>
+                      <SidebarMenuButton asChild isActive={isActive(item.url, (item as any).exact)}>
+                        <Link to={item.url}>
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -169,7 +177,7 @@ export function AppSidebar() {
               {email}
             </div>
           )}
-          {isOperator && (
+          {isOperator && !isRestrictedOperator && (
             <Button
               asChild
               variant="outline"

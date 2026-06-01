@@ -8,7 +8,7 @@ import {
   deleteFilesFromBucket,
 } from "./photo-storage.server";
 import { normalizePhone, birthdateToPassword } from "./photo-utils";
-import { getOperatorTenantId, getTenantBySlug } from "./tenant.server";
+import { getOperatorTenantId, getTenantBySlug, assertFullOperator } from "./tenant.server";
 
 const DEFAULT_TENANT_ID = "00000000-0000-0000-0000-000000000001";
 
@@ -33,11 +33,12 @@ export const getMyRole = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { userId } = context;
     const [{ data: roles }, { data: superRow }] = await Promise.all([
-      supabaseAdmin.from("user_roles").select("role, tenant_id").eq("user_id", userId),
+      supabaseAdmin.from("user_roles").select("role, tenant_id, restricted").eq("user_id", userId),
       supabaseAdmin.from("super_admins").select("user_id").eq("user_id", userId).maybeSingle(),
     ]);
     const set = new Set((roles ?? []).map((r) => r.role));
-    const tenantId = (roles ?? []).find((r) => r.role === "operator")?.tenant_id
+    const opRow = (roles ?? []).find((r) => r.role === "operator");
+    const tenantId = opRow?.tenant_id
       ?? (roles ?? []).find((r) => r.role === "customer")?.tenant_id
       ?? null;
     let tenantSlug: string | null = null;
@@ -51,6 +52,7 @@ export const getMyRole = createServerFn({ method: "GET" })
       isOperator: set.has("operator"),
       isCustomer: set.has("customer"),
       isSuperAdmin: !!superRow,
+      isRestrictedOperator: !!(opRow as any)?.restricted,
       tenantId,
       tenantSlug,
     };
@@ -197,7 +199,7 @@ export const createCustomerAndSale = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => SellSchema.parse(d))
   .handler(async ({ data, context }) => {
     const operatorId = context.userId;
-    const tenantId = await getOperatorTenantId(operatorId);
+    const tenantId = await assertFullOperator(operatorId);
     const { data: tenant } = await supabaseAdmin
       .from("tenants").select("slug").eq("id", tenantId).single();
     const slug = tenant?.slug ?? "default";
@@ -367,7 +369,8 @@ export const listSales = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
-    const tenantId = await getOperatorTenantId(userId);
+    const tenantId = await assertFullOperator(userId);
+
 
     const { data, error } = await supabaseAdmin
       .from("sales")
@@ -435,7 +438,9 @@ export const getSalesMetrics = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
-    const tenantId = await getOperatorTenantId(userId);
+    const tenantId = await assertFullOperator(userId);
+
+
 
     // Pull all sales with their items count, scoped to tenant
     const { data: sales, error } = await supabaseAdmin
@@ -579,6 +584,7 @@ export const claimFirstOperator = createServerFn({ method: "POST" })
 const CreateOperatorSchema = z.object({
   email: z.string().email().max(180),
   password: z.string().min(6).max(120),
+  restricted: z.boolean().optional(),
 });
 
 export const createOperator = createServerFn({ method: "POST" })
@@ -586,7 +592,7 @@ export const createOperator = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => CreateOperatorSchema.parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context;
-    const tenantId = await getOperatorTenantId(userId);
+    const tenantId = await assertFullOperator(userId);
 
     const created = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
@@ -599,9 +605,14 @@ export const createOperator = createServerFn({ method: "POST" })
     const newId = created.data.user.id;
     const { error: roleErr } = await supabaseAdmin
       .from("user_roles")
-      .insert({ user_id: newId, role: "operator", tenant_id: tenantId });
+      .insert({
+        user_id: newId,
+        role: "operator",
+        tenant_id: tenantId,
+        restricted: !!data.restricted,
+      } as any);
     if (roleErr) throw new Error(roleErr.message);
-    return { id: newId, email: data.email };
+    return { id: newId, email: data.email, restricted: !!data.restricted };
   });
 
 // ------------------------------------------------------------------
@@ -611,23 +622,24 @@ export const listOperators = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
-    const tenantId = await getOperatorTenantId(userId);
+    const tenantId = await assertFullOperator(userId);
 
     const { data: roles, error } = await supabaseAdmin
       .from("user_roles")
-      .select("user_id, created_at")
+      .select("user_id, created_at, restricted")
       .eq("role", "operator")
       .eq("tenant_id", tenantId)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
 
-    const out: Array<{ id: string; email: string | null; createdAt: string }> = [];
+    const out: Array<{ id: string; email: string | null; createdAt: string; restricted: boolean }> = [];
     for (const r of roles ?? []) {
       const u = await supabaseAdmin.auth.admin.getUserById(r.user_id);
       out.push({
         id: r.user_id,
         email: u.data.user?.email ?? null,
         createdAt: r.created_at,
+        restricted: !!(r as any).restricted,
       });
     }
     return out;
