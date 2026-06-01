@@ -584,6 +584,7 @@ export const claimFirstOperator = createServerFn({ method: "POST" })
 const CreateOperatorSchema = z.object({
   email: z.string().email().max(180),
   password: z.string().min(6).max(120),
+  restricted: z.boolean().optional(),
 });
 
 export const createOperator = createServerFn({ method: "POST" })
@@ -591,7 +592,7 @@ export const createOperator = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => CreateOperatorSchema.parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context;
-    const tenantId = await getOperatorTenantId(userId);
+    const tenantId = await assertFullOperator(userId);
 
     const created = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
@@ -604,9 +605,14 @@ export const createOperator = createServerFn({ method: "POST" })
     const newId = created.data.user.id;
     const { error: roleErr } = await supabaseAdmin
       .from("user_roles")
-      .insert({ user_id: newId, role: "operator", tenant_id: tenantId });
+      .insert({
+        user_id: newId,
+        role: "operator",
+        tenant_id: tenantId,
+        restricted: !!data.restricted,
+      } as any);
     if (roleErr) throw new Error(roleErr.message);
-    return { id: newId, email: data.email };
+    return { id: newId, email: data.email, restricted: !!data.restricted };
   });
 
 // ------------------------------------------------------------------
@@ -616,23 +622,24 @@ export const listOperators = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
-    const tenantId = await getOperatorTenantId(userId);
+    const tenantId = await assertFullOperator(userId);
 
     const { data: roles, error } = await supabaseAdmin
       .from("user_roles")
-      .select("user_id, created_at")
+      .select("user_id, created_at, restricted")
       .eq("role", "operator")
       .eq("tenant_id", tenantId)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
 
-    const out: Array<{ id: string; email: string | null; createdAt: string }> = [];
+    const out: Array<{ id: string; email: string | null; createdAt: string; restricted: boolean }> = [];
     for (const r of roles ?? []) {
       const u = await supabaseAdmin.auth.admin.getUserById(r.user_id);
       out.push({
         id: r.user_id,
         email: u.data.user?.email ?? null,
         createdAt: r.created_at,
+        restricted: !!(r as any).restricted,
       });
     }
     return out;
