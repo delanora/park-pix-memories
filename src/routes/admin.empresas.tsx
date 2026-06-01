@@ -117,28 +117,24 @@ function TenantsPage() {
                 <Input
                   required
                   value={form.name}
-                  onChange={(e) => {
-                    const name = e.target.value;
-                    setForm((f) => ({
-                      ...f,
-                      name,
-                      slug: f.slug || slugify(name),
-                    }));
-                  }}
-                  placeholder="Parque das Águas"
+                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                  placeholder="Parque das Águas Ltda."
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>Slug (URL: /e/&lt;slug&gt;)</Label>
+                <Label>CNPJ</Label>
                 <Input
                   required
-                  value={form.slug}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, slug: slugify(e.target.value) }))
-                  }
-                  placeholder="parque-das-aguas"
+                  value={form.cnpj}
+                  onChange={(e) => setForm((f) => ({ ...f, cnpj: formatCnpj(e.target.value) }))}
+                  placeholder="00.000.000/0000-00"
+                  inputMode="numeric"
                 />
+                <p className="text-xs text-muted-foreground">
+                  O slug (URL <code>/e/&lt;slug&gt;</code>) é gerado automaticamente a partir do CNPJ + nome.
+                </p>
               </div>
+
               <div className="my-2 border-t border-border" />
               <p className="text-xs text-muted-foreground">
                 Operador principal — terá acesso completo desta empresa.
