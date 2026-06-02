@@ -98,7 +98,8 @@ export const uploadPhoto = createServerFn({ method: "POST" })
       .single();
     if (error) {
       await deleteFilesFromBucket([path]);
-      throw new Error(error.message);
+      console.error("[internal]", error.message);
+      throw new Error("Erro interno. Tente novamente.");
     }
     return { id: inserted.id };
   });
@@ -117,7 +118,7 @@ export const listGalleryPhotos = createServerFn({ method: "GET" })
       .in("status", ["available", "sold"])
       .order("sequence_number", { ascending: false })
       .limit(30);
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[internal]", error.message); throw new Error("Erro interno. Tente novamente."); }
 
     return Promise.all(
       (photos ?? []).map(async (p) => ({
@@ -142,7 +143,7 @@ export const listLatestPhotos = createServerFn({ method: "GET" }).handler(
       .in("status", ["available", "sold"])
       .order("sequence_number", { ascending: false })
       .limit(30);
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[internal]", error.message); throw new Error("Erro interno. Tente novamente."); }
 
     return Promise.all(
       (photos ?? []).map(async (p) => ({
@@ -171,7 +172,7 @@ export const listLatestPhotosBySlug = createServerFn({ method: "GET" })
       .in("status", ["available", "sold"])
       .order("sequence_number", { ascending: false })
       .limit(30);
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[internal]", error.message); throw new Error("Erro interno. Tente novamente."); }
     return Promise.all(
       (photos ?? []).map(async (p) => ({
         id: p.id,
@@ -229,8 +230,10 @@ export const createCustomerAndSale = createServerFn({ method: "POST" })
         email_confirm: true,
         user_metadata: { full_name: data.fullName, phone: cleanPhone, tenant_slug: slug },
       });
-      if (created.error || !created.data.user)
-        throw new Error(created.error?.message ?? "Falha ao criar cliente");
+      if (created.error || !created.data.user) {
+        console.error("[internal]", created.error?.message);
+        throw new Error("Erro interno. Tente novamente.");
+      }
       customerId = created.data.user.id;
 
       const { error: profErr } = await supabaseAdmin
@@ -242,12 +245,12 @@ export const createCustomerAndSale = createServerFn({ method: "POST" })
           birthdate: data.birthdate,
           tenant_id: tenantId,
         });
-      if (profErr) throw new Error(profErr.message);
+      if (profErr) { console.error("[internal]", profErr.message); throw new Error("Erro interno. Tente novamente."); }
 
       const { error: roleErr } = await supabaseAdmin
         .from("user_roles")
         .insert({ user_id: customerId, role: "customer", tenant_id: tenantId });
-      if (roleErr) throw new Error(roleErr.message);
+      if (roleErr) { console.error("[internal]", roleErr.message); throw new Error("Erro interno. Tente novamente."); }
     }
 
     // Fetch photo prices and confirm availability (scoped to tenant)
@@ -255,7 +258,7 @@ export const createCustomerAndSale = createServerFn({ method: "POST" })
       .from("photos")
       .select("id, price, status, tenant_id")
       .in("id", data.photoIds);
-    if (photosErr) throw new Error(photosErr.message);
+    if (photosErr) { console.error("[internal]", photosErr.message); throw new Error("Erro interno. Tente novamente."); }
     if (!photos || photos.length !== data.photoIds.length)
       throw new Error("Alguma foto não foi encontrada");
     for (const p of photos) {
@@ -269,7 +272,7 @@ export const createCustomerAndSale = createServerFn({ method: "POST" })
       .insert({ customer_id: customerId, operator_id: operatorId, total, tenant_id: tenantId })
       .select("id")
       .single();
-    if (saleErr || !sale) throw new Error(saleErr?.message ?? "Falha na venda");
+    if (saleErr || !sale) { console.error("[internal]", saleErr?.message); throw new Error("Erro interno. Tente novamente."); }
 
     const items = photos.map((p) => ({
       sale_id: sale.id,
@@ -278,13 +281,13 @@ export const createCustomerAndSale = createServerFn({ method: "POST" })
       tenant_id: tenantId,
     }));
     const { error: itemsErr } = await supabaseAdmin.from("sale_items").insert(items);
-    if (itemsErr) throw new Error(itemsErr.message);
+    if (itemsErr) { console.error("[internal]", itemsErr.message); throw new Error("Erro interno. Tente novamente."); }
 
     const { error: updErr } = await supabaseAdmin
       .from("photos")
       .update({ status: "sold" })
       .in("id", data.photoIds);
-    if (updErr) throw new Error(updErr.message);
+    if (updErr) { console.error("[internal]", updErr.message); throw new Error("Erro interno. Tente novamente."); }
 
     return { saleId: sale.id, total, customerPhone: cleanPhone };
   });
@@ -302,7 +305,7 @@ export const listMyPhotos = createServerFn({ method: "GET" })
         "photo_id, unit_price, sales!inner(customer_id), photos!inner(id, storage_path, taken_at, status, sequence_number)",
       )
       .eq("sales.customer_id", userId);
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[internal]", error.message); throw new Error("Erro interno. Tente novamente."); }
 
     const rows = (data ?? []).filter(
       (r) => (r.photos as any)?.status !== "deleted",
@@ -380,7 +383,7 @@ export const listSales = createServerFn({ method: "GET" })
       .eq("tenant_id", tenantId)
       .order("created_at", { ascending: false })
       .limit(100);
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[internal]", error.message); throw new Error("Erro interno. Tente novamente."); }
     return (data ?? []).map((s: any) => ({
       id: s.id,
       total: Number(s.total),
@@ -449,7 +452,7 @@ export const getSalesMetrics = createServerFn({ method: "GET" })
       .eq("tenant_id", tenantId)
       .order("created_at", { ascending: false })
       .limit(1000);
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[internal]", error.message); throw new Error("Erro interno. Tente novamente."); }
 
     const all = sales ?? [];
 
@@ -574,7 +577,7 @@ export const claimFirstOperator = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin
       .from("user_roles")
       .insert({ user_id: data.userId, role: "operator", tenant_id: DEFAULT_TENANT_ID });
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[internal]", error.message); throw new Error("Erro interno. Tente novamente."); }
     return { ok: true };
   });
 
@@ -600,7 +603,8 @@ export const createOperator = createServerFn({ method: "POST" })
       email_confirm: true,
     });
     if (created.error || !created.data.user) {
-      throw new Error(created.error?.message ?? "Falha ao criar operador");
+      console.error("[internal]", created.error?.message);
+      throw new Error("Erro interno. Tente novamente.");
     }
     const newId = created.data.user.id;
     const { error: roleErr } = await supabaseAdmin
@@ -611,7 +615,7 @@ export const createOperator = createServerFn({ method: "POST" })
         tenant_id: tenantId,
         restricted: !!data.restricted,
       } as any);
-    if (roleErr) throw new Error(roleErr.message);
+    if (roleErr) { console.error("[internal]", roleErr.message); throw new Error("Erro interno. Tente novamente."); }
     return { id: newId, email: data.email, restricted: !!data.restricted };
   });
 
@@ -630,7 +634,7 @@ export const listOperators = createServerFn({ method: "GET" })
       .eq("role", "operator")
       .eq("tenant_id", tenantId)
       .order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[internal]", error.message); throw new Error("Erro interno. Tente novamente."); }
 
     const out: Array<{ id: string; email: string | null; createdAt: string; restricted: boolean }> = [];
     for (const r of roles ?? []) {
@@ -669,7 +673,7 @@ export const deletePhoto = createServerFn({ method: "POST" })
       .select("storage_path")
       .eq("id", data.photoId)
       .maybeSingle();
-    if (fetchErr) throw new Error(fetchErr.message);
+    if (fetchErr) { console.error("[internal]", fetchErr.message); throw new Error("Erro interno. Tente novamente."); }
     if (!photo) throw new Error("Foto não encontrada");
 
     await deleteFilesFromBucket([photo.storage_path]);
@@ -677,6 +681,6 @@ export const deletePhoto = createServerFn({ method: "POST" })
       .from("photos")
       .update({ status: "deleted", deleted_at: new Date().toISOString() })
       .eq("id", data.photoId);
-    if (updErr) throw new Error(updErr.message);
+    if (updErr) { console.error("[internal]", updErr.message); throw new Error("Erro interno. Tente novamente."); }
     return { ok: true };
   });

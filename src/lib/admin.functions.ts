@@ -28,7 +28,7 @@ export const listTenants = createServerFn({ method: "GET" })
       .from("tenants")
       .select("id, slug, name, status, created_at, fee_per_photo")
       .order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[internal]", error.message); throw new Error("Erro interno. Tente novamente."); }
 
     // Start of current month
     const monthStart = new Date();
@@ -139,7 +139,7 @@ export const createTenantWithOperator = createServerFn({ method: "POST" })
       .insert({ name: data.name, slug, cnpj: data.cnpj, status: "active" })
       .select("id")
       .single();
-    if (tErr || !tenant) throw new Error(tErr?.message ?? "Falha ao criar empresa");
+    if (tErr || !tenant) { console.error("[internal]", tErr?.message); throw new Error("Erro interno. Tente novamente."); }
 
 
     // Create default site_settings row
@@ -156,7 +156,8 @@ export const createTenantWithOperator = createServerFn({ method: "POST" })
     if (created.error || !created.data.user) {
       // best-effort rollback
       await supabaseAdmin.from("tenants").delete().eq("id", tenant.id);
-      throw new Error(created.error?.message ?? "Falha ao criar operador");
+      console.error("[internal]", created.error?.message);
+      throw new Error("Erro interno. Tente novamente.");
     }
 
     const { error: roleErr } = await supabaseAdmin
@@ -166,7 +167,7 @@ export const createTenantWithOperator = createServerFn({ method: "POST" })
         role: "operator",
         tenant_id: tenant.id,
       });
-    if (roleErr) throw new Error(roleErr.message);
+    if (roleErr) { console.error("[internal]", roleErr.message); throw new Error("Erro interno. Tente novamente."); }
 
     return { tenantId: tenant.id, operatorId: created.data.user.id };
   });
@@ -192,7 +193,7 @@ export const updateTenant = createServerFn({ method: "POST" })
       .from("tenants")
       .update(patch)
       .eq("id", data.id);
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[internal]", error.message); throw new Error("Erro interno. Tente novamente."); }
     return { ok: true };
   });
 
@@ -224,7 +225,7 @@ export const getTenantMonthlyReport = createServerFn({ method: "GET" })
       .select("id, name, slug, fee_per_photo")
       .eq("id", data.tenantId)
       .maybeSingle();
-    if (tErr) throw new Error(tErr.message);
+    if (tErr) { console.error("[internal]", tErr.message); throw new Error("Erro interno. Tente novamente."); }
     if (!t) throw new Error("Empresa não encontrada");
 
     const from = new Date(Date.UTC(data.year, data.month - 1, 1));
@@ -246,8 +247,8 @@ export const getTenantMonthlyReport = createServerFn({ method: "GET" })
         .gte("created_at", fromIso)
         .lt("created_at", toIso),
     ]);
-    if (photosRes.error) throw new Error(photosRes.error.message);
-    if (salesRes.error) throw new Error(salesRes.error.message);
+    if (photosRes.error) { console.error("[internal]", photosRes.error.message); throw new Error("Erro interno. Tente novamente."); }
+    if (salesRes.error) { console.error("[internal]", salesRes.error.message); throw new Error("Erro interno. Tente novamente."); }
 
     const photos = photosRes.data ?? [];
     const sales = salesRes.data ?? [];
@@ -366,7 +367,7 @@ export const getAdminAnalytics = createServerFn({ method: "GET" })
     const { data: tenants, error } = await supabaseAdmin
       .from("tenants")
       .select("id, slug, name");
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[internal]", error.message); throw new Error("Erro interno. Tente novamente."); }
 
     const sinceDate = new Date();
     sinceDate.setMonth(sinceDate.getMonth() - 5);
@@ -458,7 +459,7 @@ export const listTenantOperators = createServerFn({ method: "GET" })
       .select("user_id, created_at")
       .eq("tenant_id", data.tenantId)
       .eq("role", "operator");
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[internal]", error.message); throw new Error("Erro interno. Tente novamente."); }
 
     const out: OperatorDTO[] = [];
     for (const r of roles ?? []) {
@@ -496,6 +497,6 @@ export const resetOperatorPassword = createServerFn({ method: "POST" })
       data.operatorId,
       { password: data.newPassword },
     );
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[internal]", error.message); throw new Error("Erro interno. Tente novamente."); }
     return { ok: true };
   });

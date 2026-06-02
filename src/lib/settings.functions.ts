@@ -168,7 +168,7 @@ export const updateSiteSettings = createServerFn({ method: "POST" })
         foreground_color: data.foregroundColor,
         updated_at: new Date().toISOString(),
       });
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[internal]", error.message); throw new Error("Erro interno. Tente novamente."); }
     return { ok: true };
   });
 
