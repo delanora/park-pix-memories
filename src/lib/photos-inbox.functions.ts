@@ -60,9 +60,8 @@ export const ingestLocalPhotos = createServerFn({ method: "POST" })
       await ensureDir(processedDir);
       await ensureDir(failedDir);
     } catch (err: any) {
-      throw new Error(
-        `Não foi possível acessar a pasta de inbox (${inboxDir}): ${err.message}`,
-      );
+      console.error("[internal]", `inbox dir ${inboxDir}: ${err.message}`);
+      throw new Error("Erro interno. Tente novamente.");
     }
 
     const entries = await fs.readdir(inboxDir, { withFileTypes: true });
@@ -99,7 +98,8 @@ export const ingestLocalPhotos = createServerFn({ method: "POST" })
         });
         if (error) {
           await deleteFilesFromBucket([storagePath]);
-          throw new Error(error.message);
+          console.error("[internal]", error.message);
+          throw new Error("Erro interno. Tente novamente.");
         }
         const ts = new Date().toISOString().replace(/[:.]/g, "-");
         await fs.rename(
