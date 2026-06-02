@@ -91,7 +91,12 @@ const CreateTenantSchema = z.object({
   name: z.string().trim().min(2).max(120),
   cnpj: z.string().transform((v) => v.replace(/\D/g, "")).pipe(z.string().regex(CnpjRegex, "CNPJ deve ter 14 dígitos")),
   operatorEmail: z.string().email().max(180),
-  operatorPassword: z.string().min(6).max(120),
+  operatorPassword: z
+    .string()
+    .min(8, "A senha deve ter no mínimo 8 caracteres")
+    .max(120)
+    .regex(/[A-Za-z]/, "A senha deve conter pelo menos uma letra")
+    .regex(/[0-9]/, "A senha deve conter pelo menos um número"),
 });
 
 // Deterministic 12-char slug from cnpj+name using SHA-256 → base36
