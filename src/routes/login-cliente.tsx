@@ -2,7 +2,9 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
-import { phoneToEmail, birthdateToPassword, normalizePhone } from "@/lib/photo-utils";
+import { birthdateToPassword, normalizePhone } from "@/lib/photo-utils";
+import { useServerFn } from "@tanstack/react-start";
+import { findCustomerLoginEmail } from "@/lib/photos.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +22,7 @@ function ClientLogin() {
   const [phone, setPhone] = useState("");
   const [birthdate, setBirthdate] = useState("");
   const [loading, setLoading] = useState(false);
+  const lookupEmail = useServerFn(findCustomerLoginEmail);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -27,7 +30,8 @@ function ClientLogin() {
     try {
       const clean = normalizePhone(phone);
       if (clean.length < 8) throw new Error("Telefone inválido");
-      const email = phoneToEmail(clean);
+      const { email } = await lookupEmail({ data: { phone: clean } });
+      if (!email) throw new Error("Telefone não encontrado. Verifique com o operador.");
       const password = birthdateToPassword(birthdate);
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;

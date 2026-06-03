@@ -684,3 +684,26 @@ export const deletePhoto = createServerFn({ method: "POST" })
     if (updErr) { console.error("[internal]", updErr.message); throw new Error("Erro interno. Tente novamente."); }
     return { ok: true };
   });
+
+// ------------------------------------------------------------------
+// Public: resolve customer login email by phone (multi-tenant)
+// ------------------------------------------------------------------
+const LookupSchema = z.object({ phone: z.string().min(8).max(30) });
+
+export const findCustomerLoginEmail = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => LookupSchema.parse(d))
+  .handler(async ({ data }): Promise<{ email: string | null }> => {
+    const clean = normalizePhone(data.phone);
+    if (clean.length < 8) return { email: null };
+    const { data: profile, error } = await supabaseAdmin
+      .from("customer_profiles")
+      .select("phone, tenant_id, tenants!inner(slug)")
+      .eq("phone", clean)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) { console.error("[internal]", error.message); throw new Error("Erro interno. Tente novamente."); }
+    if (!profile) return { email: null };
+    const slug = (profile as any).tenants?.slug ?? "default";
+    return { email: `${clean}@${slug}.parque.local` };
+  });
