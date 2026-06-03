@@ -42,6 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsRestrictedOperator(false);
       setTenantId(null);
       setTenantSlug(null);
+      setFullName(null);
       return;
     }
     try {
@@ -52,6 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsRestrictedOperator(!!(r as any).isRestrictedOperator);
       setTenantId(r.tenantId);
       setTenantSlug(r.tenantSlug);
+      setFullName((r as any).fullName ?? null);
     } catch {
       setIsOperator(false);
       setIsCustomer(false);
@@ -59,6 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsRestrictedOperator(false);
       setTenantId(null);
       setTenantSlug(null);
+      setFullName(null);
     }
   };
 
