@@ -8,10 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2, Upload as UploadIcon } from "lucide-react";
+import { Loader2, Upload as UploadIcon, X } from "lucide-react";
 
 export const Route = createFileRoute("/operador/upload")({
-  head: () => ({ meta: [{ title: "Enviar foto | ParkSnap" }] }),
+  head: () => ({ meta: [{ title: "Enviar fotos | ParkSnap" }] }),
   component: () => (
     <RequireRole role="operator">
       <UploadPage />
@@ -19,86 +19,152 @@ export const Route = createFileRoute("/operador/upload")({
   ),
 });
 
+type Item = { file: File; previewUrl: string };
+
 function UploadPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const uploadFn = useServerFn(uploadPhoto);
-  const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
+  const [items, setItems] = useState<Item[]>([]);
   const [price, setPrice] = useState("15");
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
 
-  function onPick(f: File | null) {
-    setFile(f);
-    if (preview) URL.revokeObjectURL(preview);
-    setPreview(f ? URL.createObjectURL(f) : null);
+  function onPick(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    const next: Item[] = Array.from(files).map((file) => ({
+      file,
+      previewUrl: URL.createObjectURL(file),
+    }));
+    setItems((prev) => [...prev, ...next]);
+  }
+
+  function removeAt(idx: number) {
+    setItems((prev) => {
+      const it = prev[idx];
+      if (it) URL.revokeObjectURL(it.previewUrl);
+      return prev.filter((_, i) => i !== idx);
+    });
   }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!file) return;
+    if (items.length === 0) return;
     setBusy(true);
+    setProgress({ done: 0, total: items.length });
+    let success = 0;
+    const failed: string[] = [];
     try {
-      const buf = await file.arrayBuffer();
-      const bytes = new Uint8Array(buf);
-      let binary = "";
-      for (let i = 0; i < bytes.byteLength; i++)
-        binary += String.fromCharCode(bytes[i]);
-      const base64 = btoa(binary);
-      await uploadFn({
-        data: {
-          fileName: file.name,
-          contentType: file.type || "image/jpeg",
-          base64,
-          price: Number(price) || 0,
-        },
-      });
-      toast.success("Foto enviada para a galeria!");
+      for (let i = 0; i < items.length; i++) {
+        const { file } = items[i];
+        try {
+          const buf = await file.arrayBuffer();
+          const bytes = new Uint8Array(buf);
+          let binary = "";
+          for (let j = 0; j < bytes.byteLength; j++)
+            binary += String.fromCharCode(bytes[j]);
+          const base64 = btoa(binary);
+          await uploadFn({
+            data: {
+              fileName: file.name,
+              contentType: file.type || "image/jpeg",
+              base64,
+              price: Number(price) || 0,
+            },
+          });
+          success++;
+        } catch (err: any) {
+          failed.push(`${file.name}: ${err?.message ?? "falha"}`);
+        }
+        setProgress({ done: i + 1, total: items.length });
+      }
+
+      if (success > 0) {
+        toast.success(
+          success === 1
+            ? "Foto enviada para a galeria!"
+            : `${success} fotos enviadas para a galeria!`,
+        );
+      }
+      if (failed.length > 0) {
+        toast.error(`Falha em ${failed.length} envio(s)`);
+      }
+
       qc.invalidateQueries({ queryKey: ["gallery"] });
       qc.invalidateQueries({ queryKey: ["operator-stats"] });
       qc.invalidateQueries({ queryKey: ["latest-photos"] });
-      navigate({ to: "/operador/galeria" });
-    } catch (err: any) {
-      toast.error(err.message ?? "Falha no envio");
+
+      if (failed.length === 0) {
+        items.forEach((it) => URL.revokeObjectURL(it.previewUrl));
+        setItems([]);
+        navigate({ to: "/operador/galeria" });
+      }
     } finally {
       setBusy(false);
+      setProgress(null);
     }
   }
 
   return (
     <div className="p-6 md:p-8">
       <div className="mb-6">
-        <h1 className="font-display text-3xl font-bold">Enviar nova foto</h1>
+        <h1 className="font-display text-3xl font-bold">Enviar novas fotos</h1>
         <p className="text-sm text-muted-foreground">
-          Suba a imagem capturada na atração. Defina o valor de venda.
+          Suba uma ou várias imagens de uma vez. Defina o valor de venda aplicado a todas.
         </p>
       </div>
       <form
         onSubmit={onSubmit}
-        className="grid max-w-4xl gap-6 rounded-3xl border border-border bg-card p-6 shadow-soft md:grid-cols-2"
+        className="grid max-w-5xl gap-6 rounded-3xl border border-border bg-card p-6 shadow-soft md:grid-cols-2"
       >
         <div className="space-y-3">
-          <Label htmlFor="file">Imagem</Label>
+          <Label htmlFor="file">Imagens</Label>
           <label
             htmlFor="file"
-            className="flex aspect-square cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-border bg-muted/40 text-center transition hover:border-primary"
+            className="flex min-h-40 cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-border bg-muted/40 p-4 text-center transition hover:border-primary"
           >
-            {preview ? (
-              <img src={preview} alt="" className="h-full w-full object-cover" />
-            ) : (
-              <div className="flex flex-col items-center gap-2 p-6 text-muted-foreground">
-                <UploadIcon className="h-8 w-8" />
-                <span className="text-sm">Clique para escolher a foto</span>
-              </div>
-            )}
+            <div className="flex flex-col items-center gap-2 text-muted-foreground">
+              <UploadIcon className="h-8 w-8" />
+              <span className="text-sm">
+                Clique para escolher uma ou mais fotos
+              </span>
+            </div>
           </label>
           <Input
             id="file"
             type="file"
             accept="image/*"
+            multiple
             className="hidden"
-            onChange={(e) => onPick(e.target.files?.[0] ?? null)}
+            onChange={(e) => {
+              onPick(e.target.files);
+              e.target.value = "";
+            }}
           />
+          {items.length > 0 && (
+            <div className="grid grid-cols-3 gap-2">
+              {items.map((it, idx) => (
+                <div
+                  key={idx}
+                  className="group relative aspect-square overflow-hidden rounded-lg border border-border"
+                >
+                  <img
+                    src={it.previewUrl}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeAt(idx)}
+                    className="absolute right-1 top-1 rounded-full bg-background/90 p-1 opacity-0 transition group-hover:opacity-100"
+                    aria-label="Remover"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
         <div className="space-y-4">
           <div className="space-y-1.5">
@@ -113,13 +179,17 @@ function UploadPage() {
               required
             />
             <p className="text-xs text-muted-foreground">
-              Fotos não vendidas são removidas automaticamente após 30 fotos novas
-              ou 30 dias.
+              O valor é aplicado a todas as fotos enviadas. Fotos não vendidas são removidas automaticamente após 30 fotos novas ou 30 dias.
             </p>
           </div>
+          {progress && (
+            <p className="text-sm text-muted-foreground">
+              Enviando {progress.done} de {progress.total}…
+            </p>
+          )}
           <Button
             type="submit"
-            disabled={!file || busy}
+            disabled={items.length === 0 || busy}
             className="w-full bg-gradient-sunset shadow-glow"
           >
             {busy ? (
@@ -127,7 +197,7 @@ function UploadPage() {
             ) : (
               <UploadIcon className="mr-2 h-4 w-4" />
             )}
-            Enviar foto
+            {items.length > 1 ? `Enviar ${items.length} fotos` : "Enviar foto"}
           </Button>
         </div>
       </form>
