@@ -97,12 +97,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsRestrictedOperator(false);
     setTenantId(null);
     setTenantSlug(null);
+    setFullName(null);
   };
 
   return (
     <AuthContext.Provider
       value={{
-        loading, userId, email,
+        loading, userId, email, fullName,
         isOperator, isCustomer, isSuperAdmin, isRestrictedOperator,
         tenantId, tenantSlug,
         refresh, signOut,
