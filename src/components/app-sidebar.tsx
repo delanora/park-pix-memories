@@ -174,7 +174,7 @@ export function AppSidebar() {
         <SidebarFooter className="border-t border-sidebar-border p-3">
           {!collapsed && (
             <div className="mb-2 truncate text-xs text-muted-foreground">
-              {email}
+              {isCustomer && fullName ? fullName : email}
             </div>
           )}
           {isOperator && !isRestrictedOperator && (
