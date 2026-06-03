@@ -30,7 +30,8 @@ function ClientLogin() {
     try {
       const clean = normalizePhone(phone);
       if (clean.length < 8) throw new Error("Telefone inválido");
-      const email = phoneToEmail(clean);
+      const { email } = await lookupEmail({ data: { phone: clean } });
+      if (!email) throw new Error("Telefone não encontrado. Verifique com o operador.");
       const password = birthdateToPassword(birthdate);
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
