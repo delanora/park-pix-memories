@@ -32,9 +32,10 @@ export const getMyRole = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
-    const [{ data: roles }, { data: superRow }] = await Promise.all([
+    const [{ data: roles }, { data: superRow }, { data: profile }] = await Promise.all([
       supabaseAdmin.from("user_roles").select("role, tenant_id, restricted").eq("user_id", userId),
       supabaseAdmin.from("super_admins").select("user_id").eq("user_id", userId).maybeSingle(),
+      supabaseAdmin.from("customer_profiles").select("full_name").eq("user_id", userId).maybeSingle(),
     ]);
     const set = new Set((roles ?? []).map((r) => r.role));
     const opRow = (roles ?? []).find((r) => r.role === "operator");
@@ -55,6 +56,7 @@ export const getMyRole = createServerFn({ method: "GET" })
       isRestrictedOperator: !!(opRow as any)?.restricted,
       tenantId,
       tenantSlug,
+      fullName: profile?.full_name ?? null,
     };
   });
 

@@ -51,7 +51,7 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const navigate = useNavigate();
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
-  const { userId, email, isOperator, isCustomer, isSuperAdmin, isRestrictedOperator, signOut } = useAuth();
+  const { userId, email, fullName, isOperator, isCustomer, isSuperAdmin, isRestrictedOperator, signOut } = useAuth();
   const settings = useSettings();
 
 
@@ -174,7 +174,7 @@ export function AppSidebar() {
         <SidebarFooter className="border-t border-sidebar-border p-3">
           {!collapsed && (
             <div className="mb-2 truncate text-xs text-muted-foreground">
-              {email}
+              {isCustomer && fullName ? fullName : email}
             </div>
           )}
           {isOperator && !isRestrictedOperator && (

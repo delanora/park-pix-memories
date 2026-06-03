@@ -8,6 +8,7 @@ type AuthState = {
   loading: boolean;
   userId: string | null;
   email: string | null;
+  fullName: string | null;
   isOperator: boolean;
   isCustomer: boolean;
   isSuperAdmin: boolean;
@@ -30,6 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isRestrictedOperator, setIsRestrictedOperator] = useState(false);
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [tenantSlug, setTenantSlug] = useState<string | null>(null);
+  const [fullName, setFullName] = useState<string | null>(null);
   const getRoleFn = useServerFn(getMyRole);
 
   const loadRole = async (uid: string | null) => {
@@ -40,6 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsRestrictedOperator(false);
       setTenantId(null);
       setTenantSlug(null);
+      setFullName(null);
       return;
     }
     try {
@@ -50,6 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsRestrictedOperator(!!(r as any).isRestrictedOperator);
       setTenantId(r.tenantId);
       setTenantSlug(r.tenantSlug);
+      setFullName((r as any).fullName ?? null);
     } catch {
       setIsOperator(false);
       setIsCustomer(false);
@@ -57,6 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsRestrictedOperator(false);
       setTenantId(null);
       setTenantSlug(null);
+      setFullName(null);
     }
   };
 
@@ -92,12 +97,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsRestrictedOperator(false);
     setTenantId(null);
     setTenantSlug(null);
+    setFullName(null);
   };
 
   return (
     <AuthContext.Provider
       value={{
-        loading, userId, email,
+        loading, userId, email, fullName,
         isOperator, isCustomer, isSuperAdmin, isRestrictedOperator,
         tenantId, tenantSlug,
         refresh, signOut,
