@@ -22,6 +22,7 @@ function ClientLogin() {
   const [phone, setPhone] = useState("");
   const [birthdate, setBirthdate] = useState("");
   const [loading, setLoading] = useState(false);
+  const lookupEmail = useServerFn(findCustomerLoginEmail);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
