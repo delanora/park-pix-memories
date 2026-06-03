@@ -31,6 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isRestrictedOperator, setIsRestrictedOperator] = useState(false);
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [tenantSlug, setTenantSlug] = useState<string | null>(null);
+  const [fullName, setFullName] = useState<string | null>(null);
   const getRoleFn = useServerFn(getMyRole);
 
   const loadRole = async (uid: string | null) => {
