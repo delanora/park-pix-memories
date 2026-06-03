@@ -8,6 +8,7 @@ type AuthState = {
   loading: boolean;
   userId: string | null;
   email: string | null;
+  fullName: string | null;
   isOperator: boolean;
   isCustomer: boolean;
   isSuperAdmin: boolean;
