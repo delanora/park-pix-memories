@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { formatPriceBRL } from "@/lib/photo-utils";
 import { toast } from "sonner";
-import { Check, FolderDown, Loader2, Play, ShoppingCart, Trash2, X } from "lucide-react";
+import { Check, Circle, FolderDown, Loader2, Play, Printer, ShoppingCart, Trash2, X } from "lucide-react";
 
 import {
   AlertDialog,
@@ -66,6 +66,7 @@ function Gallery() {
   const [form, setForm] = useState({ fullName: "", phone: "", birthdate: "" });
   const [slideshow, setSlideshow] = useState(false);
   const [slideIdx, setSlideIdx] = useState(0);
+  const [previewId, setPreviewId] = useState<string | null>(null);
 
   const toggle = (id: string, status: string) => {
     if (status === "sold") return;
@@ -304,10 +305,10 @@ function Gallery() {
               >
                 <button
                   type="button"
-                  onClick={() => toggle(p.id, p.status)}
+                  onClick={() => !sold && setPreviewId(p.id)}
                   disabled={sold}
-                  className={`absolute inset-0 z-0 ${sold ? "cursor-not-allowed" : "cursor-pointer"}`}
-                  aria-label="Selecionar foto"
+                  className={`absolute inset-0 z-0 ${sold ? "cursor-not-allowed" : "cursor-zoom-in"}`}
+                  aria-label="Abrir foto"
                 >
                   <img
                     src={p.url}
@@ -325,10 +326,23 @@ function Gallery() {
                     Vendida
                   </div>
                 )}
-                {on && (
-                  <div className="pointer-events-none absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-glow">
-                    <Check className="h-4 w-4" />
-                  </div>
+                {!sold && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggle(p.id, p.status);
+                    }}
+                    className={`absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full shadow transition focus:opacity-100 ${
+                      on
+                        ? "bg-primary text-primary-foreground opacity-100 shadow-glow"
+                        : "bg-background/90 text-foreground opacity-0 hover:bg-background group-hover:opacity-100"
+                    }`}
+                    aria-label={on ? "Desmarcar foto" : "Selecionar foto"}
+                    title={on ? "Desmarcar foto" : "Selecionar foto"}
+                  >
+                    {on ? <Check className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
+                  </button>
                 )}
                 <button
                   type="button"
@@ -400,6 +414,57 @@ function Gallery() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!previewId} onOpenChange={(o) => !o && setPreviewId(null)}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Foto #{photos?.find((p) => p.id === previewId)?.sequenceNumber}</DialogTitle>
+          </DialogHeader>
+          {previewId && (() => {
+            const p = photos?.find((ph) => ph.id === previewId);
+            if (!p) return null;
+            return (
+              <div className="space-y-4">
+                <div className="overflow-hidden rounded-xl bg-muted">
+                  <img src={p.url} alt="" className="max-h-[60vh] w-full object-contain" />
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Preço</span>
+                  <span className="font-display text-lg font-bold">{formatPriceBRL(p.price)}</span>
+                </div>
+                <DialogFooter className="gap-2 sm:gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      const w = window.open(p.url, "_blank");
+                      if (w) {
+                        w.addEventListener("load", () => {
+                          try { w.focus(); w.print(); } catch {}
+                        });
+                      }
+                    }}
+                  >
+                    <Printer className="mr-2 h-4 w-4" />
+                    Imprimir
+                  </Button>
+                  <Button
+                    disabled={p.status === "sold"}
+                    className="bg-gradient-sunset shadow-glow"
+                    onClick={() => {
+                      setSelected(new Set([p.id]));
+                      setPreviewId(null);
+                      setOpen(true);
+                    }}
+                  >
+                    <ShoppingCart className="mr-2 h-4 w-4" />
+                    Vender esta foto
+                  </Button>
+                </DialogFooter>
+              </div>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
