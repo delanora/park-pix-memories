@@ -66,6 +66,7 @@ function Gallery() {
   const [form, setForm] = useState({ fullName: "", phone: "", birthdate: "" });
   const [slideshow, setSlideshow] = useState(false);
   const [slideIdx, setSlideIdx] = useState(0);
+  const [previewId, setPreviewId] = useState<string | null>(null);
 
   const toggle = (id: string, status: string) => {
     if (status === "sold") return;
