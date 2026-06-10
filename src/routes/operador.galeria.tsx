@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { formatPriceBRL } from "@/lib/photo-utils";
 import { toast } from "sonner";
-import { Check, CircleCheck, Circle, FolderDown, Loader2, Play, Printer, ShoppingCart, Trash2, X } from "lucide-react";
+import { Check, Circle, FolderDown, Loader2, Play, Printer, ShoppingCart, Trash2, X } from "lucide-react";
 
 import {
   AlertDialog,
