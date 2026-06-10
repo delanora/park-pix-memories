@@ -305,10 +305,10 @@ function Gallery() {
               >
                 <button
                   type="button"
-                  onClick={() => toggle(p.id, p.status)}
+                  onClick={() => !sold && setPreviewId(p.id)}
                   disabled={sold}
-                  className={`absolute inset-0 z-0 ${sold ? "cursor-not-allowed" : "cursor-pointer"}`}
-                  aria-label="Selecionar foto"
+                  className={`absolute inset-0 z-0 ${sold ? "cursor-not-allowed" : "cursor-zoom-in"}`}
+                  aria-label="Abrir foto"
                 >
                   <img
                     src={p.url}
@@ -326,10 +326,23 @@ function Gallery() {
                     Vendida
                   </div>
                 )}
-                {on && (
-                  <div className="pointer-events-none absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-glow">
-                    <Check className="h-4 w-4" />
-                  </div>
+                {!sold && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggle(p.id, p.status);
+                    }}
+                    className={`absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full shadow transition focus:opacity-100 ${
+                      on
+                        ? "bg-primary text-primary-foreground opacity-100 shadow-glow"
+                        : "bg-background/90 text-foreground opacity-0 hover:bg-background group-hover:opacity-100"
+                    }`}
+                    aria-label={on ? "Desmarcar foto" : "Selecionar foto"}
+                    title={on ? "Desmarcar foto" : "Selecionar foto"}
+                  >
+                    {on ? <Check className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
+                  </button>
                 )}
                 <button
                   type="button"
