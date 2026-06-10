@@ -440,25 +440,23 @@ function Gallery() {
                         const res = await fetch(p.url);
                         const blob = await res.blob();
                         const blobUrl = URL.createObjectURL(blob);
+                        const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title></title><style>
+@page { size: auto; margin: 0; }
+html, body { margin: 0; padding: 0; background: #fff; }
+img { display: block; width: 100%; height: 100vh; object-fit: contain; }
+@media print { html, body { width: 100%; height: 100%; } img { width: 100%; height: 100%; } }
+</style></head><body><img src="${blobUrl}" onload="setTimeout(()=>{window.focus();window.print();},50)"></body></html>`;
                         const iframe = document.createElement("iframe");
-                        iframe.style.position = "fixed";
-                        iframe.style.right = "0";
-                        iframe.style.bottom = "0";
-                        iframe.style.width = "0";
-                        iframe.style.height = "0";
-                        iframe.style.border = "0";
-                        iframe.src = blobUrl;
-                        iframe.onload = () => {
-                          try {
-                            iframe.contentWindow?.focus();
-                            iframe.contentWindow?.print();
-                          } catch {}
-                          setTimeout(() => {
-                            URL.revokeObjectURL(blobUrl);
-                            iframe.remove();
-                          }, 60000);
-                        };
+                        iframe.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;";
                         document.body.appendChild(iframe);
+                        const doc = iframe.contentDocument!;
+                        doc.open();
+                        doc.write(html);
+                        doc.close();
+                        setTimeout(() => {
+                          URL.revokeObjectURL(blobUrl);
+                          iframe.remove();
+                        }, 60000);
                       } catch {
                         toast.error("Falha ao preparar impressão");
                       }
