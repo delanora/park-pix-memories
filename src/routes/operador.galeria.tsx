@@ -435,12 +435,32 @@ function Gallery() {
                 <DialogFooter className="gap-2 sm:gap-2">
                   <Button
                     variant="outline"
-                    onClick={() => {
-                      const w = window.open(p.url, "_blank");
-                      if (w) {
-                        w.addEventListener("load", () => {
-                          try { w.focus(); w.print(); } catch {}
-                        });
+                    onClick={async () => {
+                      try {
+                        const res = await fetch(p.url);
+                        const blob = await res.blob();
+                        const blobUrl = URL.createObjectURL(blob);
+                        const iframe = document.createElement("iframe");
+                        iframe.style.position = "fixed";
+                        iframe.style.right = "0";
+                        iframe.style.bottom = "0";
+                        iframe.style.width = "0";
+                        iframe.style.height = "0";
+                        iframe.style.border = "0";
+                        iframe.src = blobUrl;
+                        iframe.onload = () => {
+                          try {
+                            iframe.contentWindow?.focus();
+                            iframe.contentWindow?.print();
+                          } catch {}
+                          setTimeout(() => {
+                            URL.revokeObjectURL(blobUrl);
+                            iframe.remove();
+                          }, 60000);
+                        };
+                        document.body.appendChild(iframe);
+                      } catch {
+                        toast.error("Falha ao preparar impressão");
                       }
                     }}
                   >
