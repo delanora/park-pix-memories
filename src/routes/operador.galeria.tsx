@@ -314,6 +314,7 @@ function Gallery() {
                     alt=""
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                     loading="lazy"
+                    onContextMenu={(e) => e.preventDefault()}
                   />
                 </button>
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/80 to-transparent p-2 text-xs text-white">
@@ -368,6 +369,7 @@ function Gallery() {
             alt=""
             className="max-h-full max-w-full object-contain animate-fade-in"
             key={photos[slideIdx % photos.length].id}
+            onContextMenu={(e) => e.preventDefault()}
           />
           <div className="pointer-events-none absolute bottom-6 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-4 py-1 text-xs text-white">
             {(slideIdx % photos.length) + 1} / {photos.length} - troca a cada 8s - Esc para sair
@@ -425,7 +427,7 @@ function Gallery() {
             return (
               <div className="space-y-4">
                 <div className="overflow-hidden rounded-xl bg-muted">
-                  <img src={p.url} alt="" className="max-h-[60vh] w-full object-contain" />
+                  <img src={p.url} alt="" className="max-h-[60vh] w-full object-contain" onContextMenu={(e) => e.preventDefault()} />
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Preço</span>
