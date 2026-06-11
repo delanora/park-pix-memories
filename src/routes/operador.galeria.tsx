@@ -305,9 +305,8 @@ function Gallery() {
               >
                 <button
                   type="button"
-                  onClick={() => !sold && setPreviewId(p.id)}
-                  disabled={sold}
-                  className={`absolute inset-0 z-0 ${sold ? "cursor-not-allowed" : "cursor-zoom-in"}`}
+                  onClick={() => setPreviewId(p.id)}
+                  className="absolute inset-0 z-0 cursor-zoom-in"
                   aria-label="Abrir foto"
                 >
                   <img
