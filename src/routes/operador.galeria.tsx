@@ -305,9 +305,8 @@ function Gallery() {
               >
                 <button
                   type="button"
-                  onClick={() => !sold && setPreviewId(p.id)}
-                  disabled={sold}
-                  className={`absolute inset-0 z-0 ${sold ? "cursor-not-allowed" : "cursor-zoom-in"}`}
+                  onClick={() => setPreviewId(p.id)}
+                  className="absolute inset-0 z-0 cursor-zoom-in"
                   aria-label="Abrir foto"
                 >
                   <img
@@ -466,18 +465,19 @@ img { display: block; width: 100%; height: 100vh; object-fit: contain; }
                     <Printer className="mr-2 h-4 w-4" />
                     Imprimir
                   </Button>
-                  <Button
-                    disabled={p.status === "sold"}
-                    className="bg-gradient-sunset shadow-glow"
-                    onClick={() => {
-                      setSelected(new Set([p.id]));
-                      setPreviewId(null);
-                      setOpen(true);
-                    }}
-                  >
-                    <ShoppingCart className="mr-2 h-4 w-4" />
-                    Vender esta foto
-                  </Button>
+                  {p.status !== "sold" && (
+                    <Button
+                      className="bg-gradient-sunset shadow-glow"
+                      onClick={() => {
+                        setSelected(new Set([p.id]));
+                        setPreviewId(null);
+                        setOpen(true);
+                      }}
+                    >
+                      <ShoppingCart className="mr-2 h-4 w-4" />
+                      Vender esta foto
+                    </Button>
+                  )}
                 </DialogFooter>
               </div>
             );
