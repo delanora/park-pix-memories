@@ -465,18 +465,19 @@ img { display: block; width: 100%; height: 100vh; object-fit: contain; }
                     <Printer className="mr-2 h-4 w-4" />
                     Imprimir
                   </Button>
-                  <Button
-                    disabled={p.status === "sold"}
-                    className="bg-gradient-sunset shadow-glow"
-                    onClick={() => {
-                      setSelected(new Set([p.id]));
-                      setPreviewId(null);
-                      setOpen(true);
-                    }}
-                  >
-                    <ShoppingCart className="mr-2 h-4 w-4" />
-                    Vender esta foto
-                  </Button>
+                  {p.status !== "sold" && (
+                    <Button
+                      className="bg-gradient-sunset shadow-glow"
+                      onClick={() => {
+                        setSelected(new Set([p.id]));
+                        setPreviewId(null);
+                        setOpen(true);
+                      }}
+                    >
+                      <ShoppingCart className="mr-2 h-4 w-4" />
+                      Vender esta foto
+                    </Button>
+                  )}
                 </DialogFooter>
               </div>
             );
