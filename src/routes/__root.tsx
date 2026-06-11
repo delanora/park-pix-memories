@@ -119,6 +119,24 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
+  useEffect(() => {
+    const onCtx = (e: MouseEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t && t.closest("img")) e.preventDefault();
+    };
+    const onDrag = (e: DragEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t && t.tagName === "IMG") e.preventDefault();
+    };
+    document.addEventListener("contextmenu", onCtx);
+    document.addEventListener("dragstart", onDrag);
+    return () => {
+      document.removeEventListener("contextmenu", onCtx);
+      document.removeEventListener("dragstart", onDrag);
+    };
+  }, []);
+
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
