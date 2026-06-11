@@ -435,6 +435,7 @@ function Gallery() {
                 <DialogFooter className="gap-2 sm:gap-2">
                   <Button
                     variant="outline"
+                    disabled={p.status !== "sold"}
                     onClick={async () => {
                       try {
                         const res = await fetch(p.url);
